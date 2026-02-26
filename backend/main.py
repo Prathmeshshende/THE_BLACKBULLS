@@ -8,7 +8,8 @@ from fastapi.staticfiles import StaticFiles
 
 from db.database import init_db
 from db import models as _db_models  # noqa: F401
-from routers import auth, eligibility, hospital, status, triage, voice
+from db import models_enterprise as _db_enterprise_models  # noqa: F401
+from routers import analytics, auth, callcenter, crm, eligibility, erp, fraud, hospital, sales, status, triage, voice, whatsapp
 from services.ai_service import AIService
 from services.stt_service import STTService
 
@@ -110,3 +111,10 @@ app.include_router(eligibility.router)
 app.include_router(hospital.router)
 app.include_router(status.router)
 app.include_router(auth.router)
+app.include_router(crm.router)
+app.include_router(whatsapp.router)
+app.include_router(erp.router)
+app.include_router(fraud.router)
+app.include_router(callcenter.router)
+app.include_router(sales.router)
+app.include_router(analytics.router)

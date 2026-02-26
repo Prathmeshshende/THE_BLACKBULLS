@@ -33,6 +33,15 @@ class WhatsAppSummaryRequest(BaseModel):
     message_summary: str = Field(..., min_length=3)
 
 
+class WhatsAppConversationSummaryRequest(BaseModel):
+    phone_number: str = Field(..., min_length=8)
+    triage_advice: str = Field(..., min_length=3)
+    risk_level: str | None = None
+    eligibility_summary: str | None = None
+    eligible_schemes: list[str] = []
+    city: str = Field("Bengaluru", min_length=2)
+
+
 class WhatsAppSummaryResponse(BaseModel):
     id: int
     phone_number: str
@@ -106,8 +115,13 @@ class SalesMetricsResponse(BaseModel):
     conversion_rate: float
 
 
+class AnalyticsDayPoint(BaseModel):
+    day: str
+    count: int
+
+
 class AnalyticsDashboardResponse(BaseModel):
-    calls_per_day: list[dict[str, int]]
+    calls_per_day: list[AnalyticsDayPoint]
     risk_distribution: dict[str, int]
     eligibility_approval_rate: float
     drop_rate: float
