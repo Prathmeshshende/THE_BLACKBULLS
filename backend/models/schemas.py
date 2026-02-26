@@ -30,12 +30,31 @@ class EligibilityRequest(BaseModel):
     age: int = Field(..., ge=0)
     bpl_card: bool = False
     state: str = Field(..., min_length=2)
+    family_size: int = Field(1, ge=1)
+    has_chronic_illness: bool = False
+    has_disability: bool = False
+    is_pregnant: bool = False
+    rural_resident: bool = False
+    annual_hospital_visits: int = Field(0, ge=0)
+    has_government_id: bool = True
+    occupation: str | None = None
+
+
+class SchemeDecision(BaseModel):
+    scheme_name: str
+    eligible: bool
+    reason: str
 
 
 class EligibilityResponse(BaseModel):
     eligible: bool
+    assessment_summary: str
+    score: int
+    matched_rules: list[str]
+    scheme_decisions: list[SchemeDecision]
     reasons: list[str]
     benefits: dict[str, str]
+    required_documents: list[str]
     next_steps: list[str]
     disclaimer: str = MEDICAL_DISCLAIMER
 

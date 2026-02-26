@@ -3,11 +3,12 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from db.database import init_db
-from routers import auth, eligibility, status, transcription, triage
+from db import models as _db_models  # noqa: F401
+from routers import auth, eligibility, hospital, status, triage, voice
 from services.ai_service import AIService
 from services.stt_service import STTService
 
@@ -67,7 +68,20 @@ async def on_startup() -> None:
         print(f"[startup] Database initialization skipped: {exc}")
 
 BASE_DIR = Path(__file__).resolve().parent
-FRONTEND_DIR = BASE_DIR.parent / "fontend" / "p1"
+
+
+def resolve_frontend_dir() -> Path:
+    candidates = [
+        BASE_DIR.parent / "frontend" / "p1",
+        BASE_DIR.parent / "fontend" / "p1",
+    ]
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    return candidates[0]
+
+
+FRONTEND_DIR = resolve_frontend_dir()
 
 if FRONTEND_DIR.exists():
     app.mount("/frontend", StaticFiles(directory=str(FRONTEND_DIR)), name="frontend")
@@ -75,16 +89,24 @@ if FRONTEND_DIR.exists():
 
 @app.get("/")
 async def root() -> dict[str, str]:
-    return {"message": "Healthcare Voice Assistant API is running"}
+    return {"message": "Healthcare Voice Assistant API Running"}
 
 
 @app.get("/app", include_in_schema=False)
-async def serve_app() -> FileResponse:
-    return FileResponse(FRONTEND_DIR / "page 1.html")
+async def serve_app():
+    index_candidates = [FRONTEND_DIR / "index.html", FRONTEND_DIR / "page 1.html"]
+    for entry_file in index_candidates:
+        if entry_file.exists():
+            return FileResponse(entry_file)
+    return JSONResponse(
+        status_code=404,
+        content={"message": "Frontend entry file not found. Expected index.html in frontend/p1."},
+    )
 
 
-app.include_router(transcription.router)
+app.include_router(voice.router)
 app.include_router(triage.router)
 app.include_router(eligibility.router)
+app.include_router(hospital.router)
 app.include_router(status.router)
 app.include_router(auth.router)
