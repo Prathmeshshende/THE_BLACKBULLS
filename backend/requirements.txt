@@ -6,3 +6,4 @@ asyncpg
 aioredis
 python-jose[cryptography]
 passlib[bcrypt]
+aiosqlite

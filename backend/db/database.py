@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
@@ -12,7 +13,7 @@ class Base(DeclarativeBase):
 # postgresql+asyncpg://postgres:password@localhost:5432/healthcare_voice
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "postgresql+asyncpg://postgres:postgres@localhost:5432/healthcare_voice",
+    f"sqlite+aiosqlite:///{(Path(__file__).resolve().parent.parent / 'healthcare_voice.db').as_posix()}",
 )
 
 SQL_ECHO = os.getenv("SQL_ECHO", "false").lower() == "true"

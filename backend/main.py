@@ -61,7 +61,10 @@ app.state.db_client = DatabaseClient()
 
 @app.on_event("startup")
 async def on_startup() -> None:
-    await init_db()
+    try:
+        await init_db()
+    except Exception as exc:
+        print(f"[startup] Database initialization skipped: {exc}")
 
 BASE_DIR = Path(__file__).resolve().parent
 FRONTEND_DIR = BASE_DIR.parent / "fontend" / "p1"
