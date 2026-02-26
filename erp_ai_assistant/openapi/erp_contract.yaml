@@ -1,0 +1,128 @@
+openapi: 3.0.3
+info:
+  title: Hospital ERP API Contract
+  version: 1.0.0
+servers:
+  - url: https://erp.example-hospital.com
+components:
+  securitySchemes:
+    oauth2ClientCredentials:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: https://erp.example-hospital.com/oauth2/token
+          scopes:
+            beds:read: Read bed availability
+            claims:read: Read insurance claim status
+            appointments:read: Read appointment slots
+            records:read: Read patient records
+  schemas:
+    BedAvailability:
+      type: object
+      properties:
+        department: { type: string, example: ICU }
+        available: { type: integer, example: 4 }
+        total: { type: integer, example: 20 }
+        updated_at: { type: string, format: date-time }
+    ClaimStatus:
+      type: object
+      properties:
+        claim_id: { type: string, example: "12345" }
+        status: { type: string, example: approved }
+        approved_amount: { type: number, format: float, example: 18500.0 }
+        updated_at: { type: string, format: date-time }
+    AppointmentSlots:
+      type: object
+      properties:
+        doctor: { type: string, example: Dr. Sharma }
+        date: { type: string, example: "2026-02-28" }
+        slots:
+          type: array
+          items:
+            type: object
+            properties:
+              doctor: { type: string }
+              start_time: { type: string, format: date-time }
+              end_time: { type: string, format: date-time }
+              available: { type: boolean }
+    PatientRecord:
+      type: object
+      properties:
+        patient_id: { type: string, example: P001 }
+        demographics: { type: object }
+        allergies:
+          type: array
+          items: { type: string }
+        medications:
+          type: array
+          items: { type: string }
+        diagnoses:
+          type: array
+          items: { type: string }
+security:
+  - oauth2ClientCredentials: []
+paths:
+  /api/v1/beds/availability:
+    get:
+      security:
+        - oauth2ClientCredentials: [beds:read]
+      parameters:
+        - in: query
+          name: department
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Current bed availability
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BedAvailability" }
+  /api/v1/claims/{claim_id}:
+    get:
+      security:
+        - oauth2ClientCredentials: [claims:read]
+      parameters:
+        - in: path
+          name: claim_id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Claim status
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ClaimStatus" }
+  /api/v1/appointments/slots:
+    get:
+      security:
+        - oauth2ClientCredentials: [appointments:read]
+      parameters:
+        - in: query
+          name: doctor
+          required: true
+          schema: { type: string }
+        - in: query
+          name: date
+          required: true
+          schema: { type: string, format: date }
+      responses:
+        "200":
+          description: Appointment slots
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AppointmentSlots" }
+  /api/v1/patients/{patient_id}/records:
+    get:
+      security:
+        - oauth2ClientCredentials: [records:read]
+      parameters:
+        - in: path
+          name: patient_id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Patient medical records
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PatientRecord" }

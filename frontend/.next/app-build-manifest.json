@@ -16,10 +16,15 @@
       "static/chunks/main-app.js",
       "static/chunks/app/voice/page.js"
     ],
-    "/dashboard/page": [
+    "/eligibility-checker/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/dashboard/page.js"
+      "static/chunks/app/eligibility-checker/page.js"
+    ],
+    "/hospitals/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/hospitals/page.js"
     ]
   }
 }

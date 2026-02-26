@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ArogyaAI - Voice Assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #e8f4e0;
+      --panel: #d5ebcb;
+      --panel-dark: #c4e1b8;
+      --accent: #2d6a31;
+      --accent-soft: #4c8c4f;
+      --danger: #a11d33;
+      --danger-soft: #f9dde3;
+      --text: #1f3a20;
+      --muted: #466248;
+      --white: #ffffff;
+      --radius-lg: 22px;
+      --radius-md: 14px;
+      --shadow: 0 16px 32px rgba(39, 87, 41, 0.14);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Inter, sans-serif;
+      min-height: 100vh;
+      background: linear-gradient(160deg, #f0f8eb, #dcedd3);
+      color: var(--text);
+      display: grid;
+      place-items: center;
+      padding: 18px;
+    }
+
+    .app {
+      width: min(1180px, 100%);
+      min-height: min(90vh, 760px);
+      background: linear-gradient(180deg, var(--panel), var(--panel-dark));
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 290px 1fr;
+    }
+
+    .sidebar {
+      border-right: 1px solid rgba(255, 255, 255, 0.55);
+      background: linear-gradient(180deg, #cde6c0, #bddab0);
+      padding: 24px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 26px;
+    }
+
+    .brand {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--accent);
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .nav-btn {
+      width: 100%;
+      border: none;
+      cursor: pointer;
+      text-align: left;
+      border-radius: 999px;
+      padding: 12px 14px;
+      font-weight: 600;
+      color: var(--accent);
+      background: rgba(255, 255, 255, 0.5);
+      margin-bottom: 10px;
+    }
+
+    .nav-btn.active {
+      color: #ecffea;
+      background: linear-gradient(120deg, #3f8042, #2d6a31);
+    }
+
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chip {
+      border: none;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.62);
+      color: #235026;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 7px 10px;
+      cursor: pointer;
+    }
+
+    .main {
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .lang {
+      border: none;
+      border-radius: 999px;
+      padding: 8px 12px;
+      background: var(--white);
+      color: var(--accent);
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .session {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .panel {
+      border-radius: var(--radius-lg);
+      background: rgba(255, 255, 255, 0.58);
+      border: 1px solid rgba(255, 255, 255, 0.78);
+      padding: 16px;
+    }
+
+    .input-wrap {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 10px;
+      align-items: center;
+    }
+
+    #ask-input {
+      border: none;
+      border-radius: var(--radius-md);
+      padding: 13px 14px;
+      font-size: 16px;
+      color: var(--text);
+      background: var(--white);
+      outline: none;
+    }
+
+    .btn {
+      border: none;
+      border-radius: var(--radius-md);
+      background: var(--accent);
+      color: #f2ffef;
+      padding: 12px 14px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .btn.secondary {
+      background: #3f7a42;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .card {
+      border-radius: var(--radius-md);
+      background: rgba(255, 255, 255, 0.68);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      padding: 12px;
+    }
+
+    .card h4 {
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .card p {
+      font-size: 15px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+    }
+
+    .alert {
+      display: none;
+      border-radius: var(--radius-md);
+      border: 1px solid #f2a5b2;
+      background: var(--danger-soft);
+      color: #7f1328;
+      padding: 12px;
+      font-weight: 600;
+      line-height: 1.4;
+    }
+
+    .alert.show {
+      display: block;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .action {
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      background: rgba(255, 255, 255, 0.6);
+      padding: 12px;
+      min-height: 86px;
+    }
+
+    .action b {
+      display: block;
+      margin-bottom: 6px;
+      color: #2a5e2d;
+      font-size: 13px;
+      letter-spacing: 0.02em;
+    }
+
+    .action span {
+      color: #355736;
+      font-size: 14px;
+      line-height: 1.35;
+      white-space: pre-wrap;
+    }
+
+    @media (max-width: 1000px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      .cards,
+      .actions {
+        grid-template-columns: 1fr;
+      }
+
+      .input-wrap {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <aside class="sidebar">
+      <div>
+        <div class="brand">ArogyaAI</div>
+        <p class="subtitle" id="tagline">Right care + right financial support at the right time.</p>
+      </div>
+
+      <div>
+        <button id="tab-triage" class="nav-btn active" type="button">Health Triage</button>
+        <button id="tab-eligibility" class="nav-btn" type="button">Scheme Eligibility</button>
+      </div>
+
+      <div>
+        <p class="subtitle" id="quick-prompts-label" style="margin-bottom:8px;">Quick prompts</p>
+        <div class="chip-row">
+          <button class="chip" data-prompt="I have chest pain and sweating">Chest pain + sweating</button>
+          <button class="chip" data-prompt="I have breathing difficulty and dizziness">Breathing difficulty</button>
+          <button class="chip" data-prompt="Age 46 income 220000 bpl yes state Karnataka">Check my scheme</button>
+          <button class="chip" data-prompt="I have fever and cough">Fever and cough</button>
+        </div>
+      </div>
+    </aside>
+
+    <section class="main">
+      <div class="toolbar">
+        <span class="session" id="session-label">Session: default-session</span>
+        <button id="lang-btn" class="lang" type="button">EN / HI</button>
+      </div>
+
+      <div class="panel input-wrap">
+        <input id="ask-input" type="text" placeholder="Describe symptoms or say scheme details (age, income, bpl, state)" />
+        <button id="send-btn" class="btn" type="button">Send</button>
+        <button id="mic-btn" class="btn secondary" type="button">🎤 Voice</button>
+      </div>
+
+      <div id="emergency-alert" class="alert" aria-live="assertive"></div>
+
+      <div class="cards">
+        <div class="card">
+          <h4 id="summary-title">Assistant Summary</h4>
+          <p id="summary-text">Tell me your symptoms or ask about a government scheme.</p>
+        </div>
+        <div class="card">
+          <h4 id="status-title">Backend Status</h4>
+          <p id="status-text">Waiting for interaction...</p>
+        </div>
+      </div>
+
+      <div class="actions">
+        <div class="action">
+          <b id="next-care-label">Next Care Action</b>
+          <span id="next-care">No recommendation yet.</span>
+        </div>
+        <div class="action">
+          <b id="next-finance-label">Financial Support</b>
+          <span id="next-finance">No scheme suggestion yet.</span>
+        </div>
+        <div class="action">
+          <b id="next-hospital-label">Hospital Navigation</b>
+          <span id="next-hospital">Share your state for nearest government option.</span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const API_BASE = (window.location.protocol === 'http:' || window.location.protocol === 'https:')
+      ? window.location.origin
+      : 'http://127.0.0.1:8000';
+
+    const sessionId = 'default-session';
+    const translations = {
+      en: {
+        tagline: 'Right care + right financial support at the right time.',
+        triageTab: 'Health Triage',
+        eligibilityTab: 'Scheme Eligibility',
+        prompts: 'Quick prompts',
+        placeholderTriage: 'Describe symptoms clearly (example: chest pain and sweating)',
+        placeholderEligibility: 'Example: age 45 income 300000 bpl yes state Karnataka',
+        summaryTitle: 'Assistant Summary',
+        statusTitle: 'Backend Status',
+        nextCare: 'Next Care Action',
+        nextFinance: 'Financial Support',
+        nextHospital: 'Hospital Navigation',
+        waiting: 'Waiting for interaction...',
+        noCare: 'No recommendation yet.',
+        noFinance: 'No scheme suggestion yet.',
+        noHospital: 'Share your state for nearest government option.',
+      },
+      hi: {
+        tagline: 'सही समय पर सही इलाज और सही आर्थिक सहायता।',
+        triageTab: 'स्वास्थ्य ट्रायेज',
+        eligibilityTab: 'योजना पात्रता',
+        prompts: 'त्वरित उदाहरण',
+        placeholderTriage: 'लक्षण बताएं (उदाहरण: सीने में दर्द और पसीना)',
+        placeholderEligibility: 'उदाहरण: age 45 income 300000 bpl yes state Karnataka',
+        summaryTitle: 'सहायक सारांश',
+        statusTitle: 'बैकएंड स्थिति',
+        nextCare: 'अगला इलाज कदम',
+        nextFinance: 'आर्थिक सहायता',
+        nextHospital: 'अस्पताल सुझाव',
+        waiting: 'इंटरैक्शन का इंतज़ार...',
+        noCare: 'अभी कोई सलाह नहीं।',
+        noFinance: 'अभी कोई योजना सुझाव नहीं।',
+        noHospital: 'राज्य साझा करें ताकि सरकारी अस्पताल सुझाव मिल सके।',
+      }
+    };
+
+    const hospitalByState = {
+      karnataka: 'Victoria Government Hospital, Bengaluru (PM-JAY support likely).',
+      maharashtra: 'KEM Hospital, Mumbai (Govt tertiary care).',
+      delhi: 'Lok Nayak Hospital, New Delhi.',
+      'tamil nadu': 'Rajiv Gandhi Government General Hospital, Chennai.',
+      default: 'Nearest District Government Hospital (scheme desk at admission counter).'
+    };
+
+    const emergencyPatterns = [
+      /chest pain.*sweat|sweat.*chest pain/i,
+      /difficulty breathing|breathing difficulty|shortness of breath|breathless/i,
+      /unconscious|passed out|fainted/i,
+      /severe bleeding|not breathing/i,
+    ];
+
+    let mode = 'triage';
+    let lang = 'hi';
+    let recorder = null;
+    let chunks = [];
+    let speechRecognizer = null;
+    let recognizedTranscript = '';
+
+    const tabTriage = document.getElementById('tab-triage');
+    const tabEligibility = document.getElementById('tab-eligibility');
+    const askInput = document.getElementById('ask-input');
+    const sendBtn = document.getElementById('send-btn');
+    const micBtn = document.getElementById('mic-btn');
+    const langBtn = document.getElementById('lang-btn');
+    const summaryText = document.getElementById('summary-text');
+    const statusText = document.getElementById('status-text');
+    const emergencyAlert = document.getElementById('emergency-alert');
+    const nextCare = document.getElementById('next-care');
+    const nextFinance = document.getElementById('next-finance');
+    const nextHospital = document.getElementById('next-hospital');
+
+    function detectPreferredLanguageFromText(text) {
+      const normalized = String(text || '').toLowerCase();
+      const hasHindiScript = /[\u0900-\u097F]/.test(text || '');
+      const asksHindi = /hindi|hindi me|hindi mein|हिंदी|हिन्दी|हिंदी में|हिन्दी में/.test(normalized) || hasHindiScript;
+      return asksHindi ? 'hi' : lang;
+    }
+
+    function riskLabel(risk, outLang) {
+      if (outLang !== 'hi') return risk;
+      if (/high/i.test(risk)) return 'उच्च';
+      if (/medium/i.test(risk)) return 'मध्यम';
+      return 'कम';
+    }
+
+    function speakText(text, outLang = lang) {
+      if (!text || !('speechSynthesis' in window)) {
+        return;
+      }
+
+      const cleaned = text.replace(/[✅❌⚠️•]/g, ' ').replace(/\s+/g, ' ').trim();
+      if (!cleaned) {
+        return;
+      }
+
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(cleaned);
+      utterance.lang = outLang === 'hi' ? 'hi-IN' : 'en-IN';
+      utterance.rate = 1;
+      utterance.pitch = 1;
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function t(key) {
+      return translations[lang][key] || key;
+    }
+
+    function applyLanguage() {
+      document.getElementById('tagline').textContent = t('tagline');
+      document.getElementById('tab-triage').textContent = t('triageTab');
+      document.getElementById('tab-eligibility').textContent = t('eligibilityTab');
+      document.getElementById('quick-prompts-label').textContent = t('prompts');
+      document.getElementById('summary-title').textContent = t('summaryTitle');
+      document.getElementById('status-title').textContent = t('statusTitle');
+      document.getElementById('next-care-label').textContent = t('nextCare');
+      document.getElementById('next-finance-label').textContent = t('nextFinance');
+      document.getElementById('next-hospital-label').textContent = t('nextHospital');
+      askInput.placeholder = mode === 'triage' ? t('placeholderTriage') : t('placeholderEligibility');
+    }
+
+    function setMode(nextMode) {
+      mode = nextMode;
+      tabTriage.classList.toggle('active', mode === 'triage');
+      tabEligibility.classList.toggle('active', mode === 'eligibility');
+      applyLanguage();
+      summaryText.textContent = mode === 'triage'
+        ? 'Risk-level guidance only. This assistant does not diagnose.'
+        : 'Share age, income, BPL status, and state to check potential benefits.';
+      emergencyAlert.classList.remove('show');
+      emergencyAlert.textContent = '';
+    }
+
+    function parseNumber(text, label, fallback) {
+      const regex = new RegExp(`${label}[^0-9]*([0-9]+(?:\\.[0-9]+)?)`, 'i');
+      const found = text.match(regex);
+      return found ? Number(found[1]) : fallback;
+    }
+
+    function parseState(text) {
+      const match = text.match(/state[^a-zA-Z]*([a-zA-Z ]{2,})/i);
+      return (match ? match[1].trim() : 'Karnataka');
+    }
+
+    function hospitalSuggestion(state) {
+      const key = String(state || '').toLowerCase();
+      return hospitalByState[key] || hospitalByState.default;
+    }
+
+    function isEmergency(text) {
+      return emergencyPatterns.some((pattern) => pattern.test(text));
+    }
+
+    function emergencyMessage(outLang = lang) {
+      return outLang === 'hi'
+        ? '⚠️ आपातकाल संकेत मिला। कृपया तुरंत नज़दीकी अस्पताल जाएं या आपात सेवा कॉल करें (112 / 108)।'
+        : '⚠️ Emergency signal detected. Please go to the nearest hospital immediately or call emergency services (112 / 108).';
+    }
+
+    async function fetchJson(path, options) {
+      const response = await fetch(`${API_BASE}${path}`, options);
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || `Request failed (${response.status})`);
+      }
+      return response.json();
+    }
+
+    async function refreshStatus() {
+      try {
+        const data = await fetchJson(`/status?session_id=${encodeURIComponent(sessionId)}`);
+        const latest = Array.isArray(data.logs) && data.logs.length ? data.logs[data.logs.length - 1] : t('waiting');
+        statusText.textContent = latest;
+      } catch {
+        statusText.textContent = 'Backend status unavailable.';
+      }
+    }
+
+    async function runTriage(text) {
+      const outLang = detectPreferredLanguageFromText(text);
+      const triage = await fetchJson('/triage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          symptom_text: text,
+          session_id: sessionId,
+          preferred_language: outLang,
+        })
+      });
+
+      const risk = String(triage.risk_level || 'Low');
+      summaryText.textContent = outLang === 'hi'
+        ? `जोखिम स्तर: ${riskLabel(risk, outLang)}\n${triage.advisory || triage.guidance || ''}`
+        : `Risk Level: ${risk}\n${triage.advisory || triage.guidance || ''}`;
+
+      if (/high/i.test(risk) || isEmergency(text)) {
+        emergencyAlert.textContent = emergencyMessage(outLang);
+        emergencyAlert.classList.add('show');
+        nextCare.textContent = outLang === 'hi'
+          ? 'तुरंत आपातकालीन उपचार लें। अभी नज़दीकी अस्पताल जाएं।'
+          : 'Immediate care recommended. Visit emergency department now.';
+      } else if (/medium/i.test(risk)) {
+        emergencyAlert.classList.remove('show');
+        nextCare.textContent = outLang === 'hi'
+          ? '24 घंटे के भीतर डॉक्टर से सलाह लें और लक्षणों पर नज़र रखें।'
+          : 'Consult a doctor within 24 hours and monitor symptoms.';
+      } else {
+        emergencyAlert.classList.remove('show');
+        nextCare.textContent = outLang === 'hi'
+          ? 'घर पर निगरानी रखें और पानी पिएं। लक्षण बढ़ें तो तुरंत अस्पताल जाएं।'
+          : 'Home monitoring and hydration. Escalate if symptoms worsen.';
+      }
+
+      const state = parseState(text);
+      nextHospital.textContent = hospitalSuggestion(state);
+      nextFinance.textContent = outLang === 'hi'
+        ? 'योजना सहायता के लिए Eligibility मोड में आयुष्मान भारत / PM-JAY जाँचें।'
+        : 'Ask eligibility mode to check Ayushman Bharat / PM-JAY support.';
+
+      return {
+        spokenReply: outLang === 'hi'
+          ? `जोखिम स्तर ${riskLabel(risk, outLang)}. ${triage.advisory || triage.guidance || ''}`
+          : `Risk level ${risk}. ${triage.advisory || triage.guidance || ''}`,
+        outLang,
+      };
+    }
+
+    async function runEligibility(text) {
+      const outLang = detectPreferredLanguageFromText(text);
+      const age = parseNumber(text, 'age', 45);
+      const income = parseNumber(text, 'income', 300000);
+      const state = parseState(text);
+      const bpl = /\bbpl\b|ration card|below poverty/i.test(text);
+      const femaleHeaded = /female headed|single mother|widow/i.test(text);
+      const disabledNoCare = /disabled.*no caregiver|no caregiver/i.test(text);
+
+      const payload = {
+        income,
+        age,
+        state,
+        bpl_card: bpl,
+        preferred_language: outLang,
+        session_id: sessionId,
+      };
+
+      const data = await fetchJson('/eligibility', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const reasons = Array.isArray(data.reasons) ? data.reasons.join('\n• ') : 'No reason available.';
+      const cover = data.coverage || data.benefits?.estimated_cover || 'Up to 5 lakh per family';
+      summaryText.textContent = outLang === 'hi'
+        ? `${data.eligible ? 'संभावित रूप से पात्र ✅' : 'पात्र नहीं ❌'}\nकवरेज: ${cover}\n• ${reasons}`
+        : `${data.eligible ? 'Potentially Eligible ✅' : 'Not Eligible ❌'}\nCoverage: ${cover}\n• ${reasons}`;
+      nextFinance.textContent = data.eligible
+        ? (outLang === 'hi'
+          ? 'संभावित सहायता: आयुष्मान भारत / PM-JAY। पहचान पत्र और आवश्यक दस्तावेज साथ रखें।'
+          : 'Potential support: Ayushman Bharat / PM-JAY. Carry ID + BPL/eligibility documents.')
+        : (outLang === 'hi'
+          ? 'सीधा मैच नहीं मिला। वैकल्पिक राज्य योजनाओं के लिए जिला हेल्पडेस्क से संपर्क करें।'
+          : 'No direct match found. Check district helpdesk for alternate state schemes.');
+      nextHospital.textContent = hospitalSuggestion(state);
+      nextCare.textContent = outLang === 'hi'
+        ? 'यदि स्वास्थ्य समस्या जरूरी है तो लक्षण जोखिम मार्गदर्शन के लिए Triage मोड का उपयोग करें।'
+        : 'Use triage mode for symptom risk guidance if health issue is urgent.';
+      emergencyAlert.classList.remove('show');
+
+      return {
+        spokenReply: outLang === 'hi'
+          ? `${data.eligible ? 'आप पात्र हो सकते हैं।' : 'आप पात्र नहीं हो सकते।'} कवरेज ${cover}. योजना सत्यापन के लिए सरकारी अस्पताल हेल्पडेस्क जाएं।`
+          : `${data.eligible ? 'You may be eligible.' : 'You may not be eligible.'} Coverage ${cover}. Please visit a government hospital helpdesk for scheme verification.`,
+        outLang,
+      };
+    }
+
+    async function handleSend() {
+      const text = askInput.value.trim();
+      if (!text) {
+        summaryText.textContent = 'Please enter your message.';
+        return;
+      }
+
+      sendBtn.disabled = true;
+      summaryText.textContent = 'Processing...';
+
+      try {
+        let response = { spokenReply: '', outLang: lang };
+        if (mode === 'triage') {
+          response = await runTriage(text);
+        } else {
+          response = await runEligibility(text);
+        }
+        await refreshStatus();
+        speakText(response.spokenReply, response.outLang);
+      } catch (error) {
+        summaryText.textContent = error instanceof Error ? error.message : 'Unknown backend error.';
+      } finally {
+        sendBtn.disabled = false;
+      }
+    }
+
+    async function stopAndTranscribe() {
+      if (speechRecognizer) {
+        try {
+          speechRecognizer.stop();
+        } catch {
+          // Ignore if recognizer already stopped.
+        }
+      }
+
+      recorder.stop();
+      await new Promise((resolve) => {
+        recorder.onstop = resolve;
+      });
+
+      if (recorder.stream) {
+        recorder.stream.getTracks().forEach((track) => track.stop());
+      }
+
+      const blob = new Blob(chunks, { type: 'audio/webm' });
+      chunks = [];
+      const formData = new FormData();
+      formData.append('file', blob, 'voice.webm');
+
+      const result = await fetchJson('/voice/transcribe', { method: 'POST', body: formData });
+      const transcriptFromApi = (result.transcript || '').trim();
+      const finalTranscript = transcriptFromApi.startsWith('TRANSCRIPTION_PLACEHOLDER')
+        ? (recognizedTranscript || '')
+        : transcriptFromApi;
+
+      askInput.value = finalTranscript;
+      summaryText.textContent = finalTranscript
+        ? `Voice captured: ${finalTranscript}`
+        : 'Voice captured. No transcript text returned.';
+      await refreshStatus();
+
+      if (finalTranscript) {
+        await handleSend();
+      }
+    }
+
+    function setupSpeechRecognition() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        return null;
+      }
+
+      const recognizer = new SpeechRecognition();
+      recognizer.lang = lang === 'hi' ? 'hi-IN' : 'en-IN';
+      recognizer.interimResults = false;
+      recognizer.continuous = false;
+      recognizer.maxAlternatives = 1;
+
+      recognizer.onresult = (event) => {
+        const transcript = event.results?.[0]?.[0]?.transcript || '';
+        recognizedTranscript = transcript.trim();
+      };
+
+      recognizer.onerror = () => {
+        // Keep silent; MediaRecorder path continues even if browser recognition fails.
+      };
+
+      return recognizer;
+    }
+
+    async function toggleMic() {
+      try {
+        if (recorder && recorder.state === 'recording') {
+          await stopAndTranscribe();
+          micBtn.textContent = '🎤 Voice';
+          return;
+        }
+
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        recorder = new MediaRecorder(stream);
+        chunks = [];
+        recognizedTranscript = '';
+
+        speechRecognizer = setupSpeechRecognition();
+        if (speechRecognizer) {
+          try {
+            speechRecognizer.start();
+          } catch {
+            // If already started or blocked, continue with backend transcription only.
+          }
+        }
+
+        recorder.ondataavailable = (event) => {
+          if (event.data && event.data.size > 0) chunks.push(event.data);
+        };
+        recorder.start();
+        micBtn.textContent = '⏹ Stop';
+        summaryText.textContent = 'Recording started... click again to stop.';
+      } catch {
+        summaryText.textContent = 'Microphone permission denied or unavailable.';
+      }
+    }
+
+    document.querySelectorAll('.chip').forEach((chip) => {
+      chip.addEventListener('click', () => {
+        askInput.value = chip.dataset.prompt || '';
+      });
+    });
+
+    tabTriage.addEventListener('click', () => setMode('triage'));
+    tabEligibility.addEventListener('click', () => setMode('eligibility'));
+    sendBtn.addEventListener('click', handleSend);
+    micBtn.addEventListener('click', toggleMic);
+    askInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        handleSend();
+      }
+    });
+
+    langBtn.addEventListener('click', () => {
+      lang = lang === 'en' ? 'hi' : 'en';
+      applyLanguage();
+      if (speechRecognizer) {
+        speechRecognizer.lang = lang === 'hi' ? 'hi-IN' : 'en-IN';
+      }
+    });
+
+    applyLanguage();
+    setMode('triage');
+    refreshStatus();
+  </script>
+</body>
+</html>

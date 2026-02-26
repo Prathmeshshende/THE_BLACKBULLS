@@ -1,9 +1,14 @@
 type Props = {
   risk: string;
   emergency: boolean;
+  language?: "en" | "hi";
 };
 
-export default function RiskIndicator({ risk, emergency }: Props) {
+export default function RiskIndicator({ risk, emergency, language = "en" }: Props) {
+  const displayRisk = language === "hi"
+    ? (risk.toUpperCase() === "HIGH" ? "उच्च" : risk.toUpperCase() === "MEDIUM" ? "मध्यम" : "कम")
+    : risk;
+
   const palette = risk === "HIGH"
     ? "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300"
     : risk === "MEDIUM"
@@ -12,13 +17,13 @@ export default function RiskIndicator({ risk, emergency }: Props) {
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-soft dark:border-slate-800 dark:bg-slate-900">
-      <h3 className="text-sm font-semibold text-slate-500">Risk Indicator</h3>
+      <h3 className="text-sm font-semibold text-slate-500">{language === "hi" ? "जोखिम संकेतक" : "Risk Indicator"}</h3>
       <div className={`mt-3 inline-flex rounded-full px-3 py-1 text-sm font-semibold ${palette}`}>
-        {risk}
+        {displayRisk}
       </div>
       {emergency ? (
         <p className="mt-3 rounded-lg bg-rose-100 p-2 text-sm font-medium text-rose-700 dark:bg-rose-900/30 dark:text-rose-300">
-          Emergency alert: escalate immediately.
+          {language === "hi" ? "आपातकालीन चेतावनी: तुरंत चिकित्सा सहायता लें।" : "Emergency alert: escalate immediately."}
         </p>
       ) : null}
     </div>

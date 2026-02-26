@@ -19,7 +19,7 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
 
     session_logs: Mapped[list["SessionLog"]] = relationship(back_populates="user", cascade="all, delete-orphan")
-    interactions: Mapped[list["InteractionLog"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    interactions: Mapped[list["InteractionLog"]] = relationship("db.models.InteractionLog", back_populates="user", cascade="all, delete-orphan")
     eligibility_records: Mapped[list["EligibilityRecord"]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan",
@@ -48,7 +48,7 @@ class InteractionLog(Base):
     emergency_flag: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
 
-    user: Mapped["User | None"] = relationship(back_populates="interactions")
+    user: Mapped["User | None"] = relationship("db.models.User", back_populates="interactions")
 
 
 class EligibilityRecord(Base):

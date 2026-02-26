@@ -5,7 +5,7 @@ from db.models import InteractionLog, User
 from db.session import get_db_session
 from models.schemas import TriageRequest, TriageResponse
 from services.auth_service import get_current_user
-from services import triage_service
+from services import logging_service, triage_service
 
 router = APIRouter(tags=["triage"])
 
@@ -27,5 +27,14 @@ async def classify_triage(
     )
     db.add(interaction)
     await db.commit()
+
+    # Basic interaction logging for analytics (separate lightweight table).
+    await logging_service.log_interaction(
+        db=db,
+        phone_number=current_user.phone,
+        symptom_text=data.symptom_text,
+        risk_level=str(result["risk_level"]),
+        eligibility_result="pending",
+    )
 
     return TriageResponse(**result)

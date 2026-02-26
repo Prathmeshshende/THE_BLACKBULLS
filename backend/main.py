@@ -8,6 +8,8 @@ from fastapi.staticfiles import StaticFiles
 
 from db.database import init_db
 from db import models as _db_models  # noqa: F401
+from db import models_crm as _db_crm_models  # noqa: F401
+from db import models_logging as _db_logging_models  # noqa: F401
 from db import models_enterprise as _db_enterprise_models  # noqa: F401
 from routers import analytics, auth, callcenter, crm, eligibility, erp, fraud, hospital, sales, status, triage, voice, whatsapp
 from services.ai_service import AIService

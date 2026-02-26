@@ -40,6 +40,7 @@ class WhatsAppConversationSummaryRequest(BaseModel):
     eligibility_summary: str | None = None
     eligible_schemes: list[str] = []
     city: str = Field("Bengaluru", min_length=2)
+    preferred_language: str = Field("en", pattern="^(en|hi)$")
 
 
 class WhatsAppSummaryResponse(BaseModel):

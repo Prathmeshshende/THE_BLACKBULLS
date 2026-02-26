@@ -13,6 +13,17 @@ class VoiceTranscriptionResponse(BaseModel):
     disclaimer: str = MEDICAL_DISCLAIMER
 
 
+class VoiceTTSRequest(BaseModel):
+    text: str = Field(..., min_length=1)
+    language: str = Field("en", pattern="^(en|hi)$")
+
+
+class VoiceTTSResponse(BaseModel):
+    audio_base64: str
+    mime_type: str = "audio/mpeg"
+    provider: str = "gtts"
+
+
 class TriageRequest(BaseModel):
     symptom_text: str = Field(..., min_length=1)
     language: str = Field("en", pattern="^(en|hi)$")
@@ -114,3 +125,11 @@ class InteractionLogResponse(BaseModel):
     symptom_text: str
     risk_level: str
     created_at: datetime
+
+
+class AnalyticsLogsResponse(BaseModel):
+    total_interactions: int
+    high_risk_count: int
+    medium_risk_count: int
+    low_risk_count: int
+    total_eligibility_approved: int

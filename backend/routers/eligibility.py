@@ -5,7 +5,7 @@ from db.models import EligibilityRecord, User
 from db.session import get_db_session
 from models.schemas import EligibilityRequest, EligibilityResponse
 from services.auth_service import get_current_user
-from services import eligibility_service
+from services import eligibility_service, logging_service
 
 router = APIRouter(tags=["eligibility"])
 
@@ -29,5 +29,12 @@ async def check_eligibility(
     )
     db.add(record)
     await db.commit()
+
+    # Keep logging simple: mark latest interaction eligibility as approved/rejected.
+    await logging_service.update_or_log_eligibility_result(
+        db=db,
+        phone_number=current_user.phone,
+        eligibility_result="approved" if bool(result["eligible"]) else "rejected",
+    )
 
     return EligibilityResponse(**result)

@@ -28,6 +28,12 @@ bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 # Fallback context for environments where bcrypt backend is unavailable/incompatible.
 fallback_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
+ADMIN_EMAILS = {
+    value.strip().lower()
+    for value in os.getenv("ADMIN_EMAILS", "demo@example.com,admin@example.com").split(",")
+    if value.strip()
+}
+
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     try:
@@ -121,3 +127,12 @@ async def get_current_user(
         raise credentials_exception
 
     return user
+
+
+async def require_admin(current_user: User = Depends(get_current_user)) -> User:
+    if current_user.email.lower() not in ADMIN_EMAILS:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required",
+        )
+    return current_user

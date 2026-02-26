@@ -2,6 +2,8 @@ import re
 
 from models.schemas import MEDICAL_DISCLAIMER
 
+HINDI_MEDICAL_DISCLAIMER = "यह चिकित्सीय निदान नहीं है। कृपया लाइसेंसधारी चिकित्सा विशेषज्ञ से परामर्श करें।"
+
 
 HIGH_RISK_KEYWORDS = ["chest pain", "difficulty breathing", "breathing difficulty", "unconscious"]
 MEDIUM_RISK_KEYWORDS = ["high fever", "fever 3 days", "fever for 3 days", "severe headache"]
@@ -96,6 +98,7 @@ def advisory_for_risk(
     emergency_flag: bool,
     symptom_text: str,
     detected_symptoms: list[str],
+    language: str = "en",
 ) -> str:
     """Generate non-diagnostic advisory text for user safety."""
     temperature_f = extract_temperature_fahrenheit(symptom_text)
@@ -140,6 +143,32 @@ def advisory_for_risk(
     action_note = " ".join(specific_actions)
     why_note = "; ".join(why_risk_points)
 
+    if language == "hi":
+      if emergency_flag or risk_level == "HIGH":
+          return (
+              "स्थिति: आपके लक्षण इस समय उच्च जोखिम (HIGH risk) दिखाते हैं और यह गंभीर अवस्था हो सकती है। "
+              f"जोखिम का कारण: {why_note}. पहचाने गए लक्षण: {symptom_note}. "
+              "अभी क्या करें (अगले 0-2 घंटे): तुरंत नजदीकी आपातकालीन विभाग जाएं। "
+              "यदि सुरक्षित रूप से जाना संभव न हो तो तुरंत इमरजेंसी सेवा को कॉल करें। "
+              f"तुरंत देखभाल के कदम: {action_note} "
+              "यदि भ्रम, सांस लेने में अधिक तकलीफ, लगातार उल्टी, छाती में दर्द, पेशाब कम होना, या अत्यधिक सुस्ती हो तो तुरंत आपातकालीन सहायता लें।"
+          )
+      if risk_level == "MEDIUM":
+          return (
+              "स्थिति: आपके लक्षण मध्यम जोखिम (MODERATE risk) दिखाते हैं और समय पर डॉक्टर की सलाह जरूरी है। "
+              f"जोखिम का कारण: {why_note}. पहचाने गए लक्षण: {symptom_note}. "
+              "अभी क्या करें (अगले 12-24 घंटे): डॉक्टर से परामर्श की व्यवस्था करें और तब तक घर पर निगरानी रखें। "
+              f"घर पर देखभाल के कदम: {action_note} "
+              "यदि बुखार और बढ़े, सांस खराब हो, छाती में दर्द शुरू हो, भ्रम हो, या उल्टी जारी रहे तो तुरंत आपातकालीन देखभाल लें।"
+          )
+      return (
+          "स्थिति: इस समय उपलब्ध जानकारी के आधार पर तुरंत जोखिम अपेक्षाकृत कम (LOW risk) दिख रहा है। "
+          f"जोखिम का कारण: {why_note}. पहचाने गए लक्षण: {symptom_note}. "
+          "अभी क्या करें (अगले 24-48 घंटे): आराम करें, पानी पर्याप्त लें, और लक्षणों की निगरानी जारी रखें। "
+          f"घर पर देखभाल के कदम: {action_note} "
+          "यदि 48 घंटे से अधिक लक्षण बने रहें या कोई गंभीर चेतावनी लक्षण पहले दिखे तो डॉक्टर से तुरंत मिलें।"
+      )
+
     if emergency_flag or risk_level == "HIGH":
         return (
             "What is happening: your symptom pattern is currently classified as HIGH risk and may represent an acute condition. "
@@ -166,7 +195,7 @@ def advisory_for_risk(
     )
 
 
-async def analyze_symptoms(symptom_text: str) -> dict[str, object]:
+async def analyze_symptoms(symptom_text: str, language: str = "en") -> dict[str, object]:
     """Main async triage entrypoint used by API routes."""
     detected_symptoms = extract_symptoms(symptom_text)
     emergency_flag = detect_emergency(symptom_text)
@@ -175,7 +204,7 @@ async def analyze_symptoms(symptom_text: str) -> dict[str, object]:
     return {
         "risk_level": risk_level,
         "emergency_flag": emergency_flag,
-        "advisory_message": advisory_for_risk(risk_level, emergency_flag, symptom_text, detected_symptoms),
-        "disclaimer": MEDICAL_DISCLAIMER,
+        "advisory_message": advisory_for_risk(risk_level, emergency_flag, symptom_text, detected_symptoms, language),
+        "disclaimer": HINDI_MEDICAL_DISCLAIMER if language == "hi" else MEDICAL_DISCLAIMER,
         "detected_symptoms": detected_symptoms,
     }

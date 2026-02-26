@@ -1,12 +1,107 @@
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from db.models_crm import CRMRecord as SimpleCRMRecord
 from db.session import get_db_session
+from models.crm_schemas import (
+    CRMFollowUpSimpleResponse,
+    CRMRecordItem,
+    CRMStoreSimpleRequest,
+    CRMStoreSimpleResponse,
+    CRMUserHistoryResponse,
+)
 from models.enterprise_schemas import CRMFollowUpRequest, CRMRecordResponse, CRMStoreRequest
 from services import crm_service
 from services.auth_service import get_current_user
 
 router = APIRouter(prefix="/crm", tags=["crm"])
+
+
+def _to_simple_item(row: SimpleCRMRecord) -> CRMRecordItem:
+    return CRMRecordItem(
+        id=row.id,
+        user_id=row.user_id,
+        phone_number=row.phone_number,
+        symptom_text=row.symptom_text,
+        risk_level=row.risk_level,
+        eligibility_status=row.eligibility_status,
+        follow_up_status=row.follow_up_status,
+        created_at=row.created_at,
+    )
+
+
+@router.post("/store", response_model=CRMStoreSimpleResponse)
+async def store_crm_record(
+    data: CRMStoreSimpleRequest,
+    db: AsyncSession = Depends(get_db_session),
+    current_user=Depends(get_current_user),
+) -> CRMStoreSimpleResponse:
+    # Keep this endpoint beginner-friendly and lightweight:
+    # store a single interaction row and return it.
+    record = SimpleCRMRecord(
+        user_id=data.user_id if data.user_id is not None else current_user.id,
+        phone_number=data.phone_number.strip(),
+        symptom_text=data.symptom_text.strip(),
+        risk_level=data.risk_level.strip(),
+        eligibility_status=data.eligibility_status.strip(),
+        follow_up_status=data.follow_up_status.strip() or "pending",
+    )
+    db.add(record)
+    await db.commit()
+    await db.refresh(record)
+
+    return CRMStoreSimpleResponse(
+        success=True,
+        message="CRM interaction stored",
+        record=_to_simple_item(record),
+    )
+
+
+@router.get("/user/{phone_number}", response_model=CRMUserHistoryResponse)
+async def get_crm_by_phone_number(
+    phone_number: str,
+    db: AsyncSession = Depends(get_db_session),
+    _current_user=Depends(get_current_user),
+) -> CRMUserHistoryResponse:
+    # Return complete interaction history for one phone number.
+    stmt = (
+        select(SimpleCRMRecord)
+        .where(SimpleCRMRecord.phone_number == phone_number.strip())
+        .order_by(SimpleCRMRecord.created_at.desc())
+    )
+    result = await db.execute(stmt)
+    rows = result.scalars().all()
+
+    return CRMUserHistoryResponse(
+        success=True,
+        message="CRM history fetched",
+        phone_number=phone_number,
+        records=[_to_simple_item(row) for row in rows],
+    )
+
+
+@router.put("/followup/{id}", response_model=CRMFollowUpSimpleResponse)
+async def mark_simple_follow_up_completed(
+    id: int,
+    db: AsyncSession = Depends(get_db_session),
+    _current_user=Depends(get_current_user),
+) -> CRMFollowUpSimpleResponse:
+    # Minimal follow-up workflow: set status to completed.
+    result = await db.execute(select(SimpleCRMRecord).where(SimpleCRMRecord.id == id))
+    row = result.scalar_one_or_none()
+    if row is None:
+        raise HTTPException(status_code=404, detail="CRM record not found")
+
+    row.follow_up_status = "completed"
+    await db.commit()
+    await db.refresh(row)
+
+    return CRMFollowUpSimpleResponse(
+        success=True,
+        message="Follow-up marked as completed",
+        record=_to_simple_item(row),
+    )
 
 
 @router.post("/store-interaction", response_model=CRMRecordResponse)
