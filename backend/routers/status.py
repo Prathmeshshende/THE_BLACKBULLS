@@ -6,6 +6,14 @@ from models.schemas import StatusResponse
 
 router = APIRouter(tags=["status"])
 
+# Database integration note:
+# Replace in-memory status lookup with SQLAlchemy queries by injecting
+# `db: AsyncSession = Depends(get_db_session)`.
+#
+# Example imports:
+# from sqlalchemy.ext.asyncio import AsyncSession
+# from db.session import get_db_session
+
 
 class DatabaseClient(Protocol):
     async def get_status(self, session_id: str) -> dict[str, object]: ...

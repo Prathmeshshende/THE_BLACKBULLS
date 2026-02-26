@@ -1,8 +1,13 @@
 from datetime import datetime, timezone
+from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
-from routers import eligibility, status, transcription, triage
+from db.database import init_db
+from routers import auth, eligibility, status, transcription, triage
 from services.ai_service import AIService
 from services.stt_service import STTService
 
@@ -41,9 +46,28 @@ class DatabaseClient:
 
 app = FastAPI(title="Healthcare Voice Assistant Backend")
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.state.stt_service = STTService()
 app.state.ai_service = AIService()
 app.state.db_client = DatabaseClient()
+
+
+@app.on_event("startup")
+async def on_startup() -> None:
+    await init_db()
+
+BASE_DIR = Path(__file__).resolve().parent
+FRONTEND_DIR = BASE_DIR.parent / "fontend" / "p1"
+
+if FRONTEND_DIR.exists():
+    app.mount("/frontend", StaticFiles(directory=str(FRONTEND_DIR)), name="frontend")
 
 
 @app.get("/")
@@ -51,7 +75,13 @@ async def root() -> dict[str, str]:
     return {"message": "Healthcare Voice Assistant API is running"}
 
 
+@app.get("/app", include_in_schema=False)
+async def serve_app() -> FileResponse:
+    return FileResponse(FRONTEND_DIR / "page 1.html")
+
+
 app.include_router(transcription.router)
 app.include_router(triage.router)
 app.include_router(eligibility.router)
 app.include_router(status.router)
+app.include_router(auth.router)

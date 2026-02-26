@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ArogyaAI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #d8eacb;
+      --panel: #bdddb6;
+      --panel-2: #cfe8c6;
+      --accent: #8ebc83;
+      --accent-2: #69985f;
+      --text: #274126;
+      --muted: #5c7659;
+      --shadow-soft: 0 18px 35px rgba(43, 77, 40, 0.14);
+      --shadow-hard: 0 20px 45px rgba(27, 56, 24, 0.2);
+      --radius-lg: 28px;
+      --radius-md: 18px;
+      --radius-sm: 12px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(900px 500px at 70% -10%, rgba(168, 217, 149, 0.35), transparent 60%),
+        linear-gradient(145deg, #cadfbd, #d8eacb 38%, #cee3c2);
+      color: var(--text);
+      padding: 16px;
+    }
+
+    .app {
+      width: min(1280px, 100%);
+      height: min(760px, calc(100vh - 32px));
+      background: linear-gradient(150deg, rgba(204, 228, 195, 0.95), rgba(189, 219, 181, 0.92));
+      border-radius: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      box-shadow: var(--shadow-hard);
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      overflow: hidden;
+      position: relative;
+      backdrop-filter: blur(6px);
+    }
+
+    .sidebar {
+      background: linear-gradient(185deg, rgba(184, 218, 177, 0.9), rgba(176, 211, 169, 0.74));
+      border-right: 1px solid rgba(255, 255, 255, 0.25);
+      padding: 26px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 42px;
+      position: relative;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 800;
+      font-size: 34px;
+      letter-spacing: -0.03em;
+      color: #2a5a2d;
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.75);
+    }
+
+    .brand img {
+      width: 52px;
+      height: 52px;
+      object-fit: contain;
+      filter: drop-shadow(0 4px 8px rgba(46, 95, 42, 0.25));
+    }
+
+    .brand span {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      transform: translateY(2px);
+    }
+
+    nav {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-top: 44px;
+      width: 100%;
+    }
+
+    .nav-btn {
+      width: fit-content;
+      border: 0;
+      background: transparent;
+      color: rgba(34, 74, 31, 0.75);
+      font-size: 38px;
+      line-height: 1.05;
+      font-weight: 500;
+      padding: 9px 16px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+
+    .nav-btn:hover {
+      color: rgba(30, 67, 27, 0.96);
+      background: rgba(232, 248, 225, 0.35);
+    }
+
+    .nav-btn.active {
+      background: linear-gradient(100deg, #9bc88e, #688f5f);
+      color: #f4fff1;
+      box-shadow: 0 10px 25px rgba(56, 107, 49, 0.24);
+    }
+
+    .main {
+      padding: 24px 28px 22px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .top-actions {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .profile {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      border: 2px solid rgba(67, 119, 61, 0.42);
+      background: radial-gradient(circle at 30% 20%, #dcf2d2, #97bf8a);
+      display: grid;
+      place-items: center;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .profile svg {
+      width: 34px;
+      height: 34px;
+      fill: rgba(52, 91, 48, 0.72);
+    }
+
+    .hero {
+      flex: 1;
+      display: grid;
+      place-items: center;
+      margin-top: -20px;
+      min-height: 260px;
+    }
+
+    .hero img {
+      width: min(740px, 100%);
+      max-height: 460px;
+      object-fit: contain;
+      filter: drop-shadow(0 18px 24px rgba(61, 108, 57, 0.24));
+      user-select: none;
+      pointer-events: none;
+    }
+
+    .command-panel {
+      width: min(860px, 96%);
+      margin: -12px auto 0;
+      border-radius: var(--radius-md);
+      background: linear-gradient(180deg, rgba(205, 233, 196, 0.9), rgba(187, 220, 178, 0.95));
+      border: 1px solid rgba(250, 255, 248, 0.45);
+      box-shadow: var(--shadow-soft);
+      overflow: hidden;
+    }
+
+    .ask-row {
+      height: 64px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 18px;
+      border-bottom: 1px solid rgba(87, 132, 82, 0.12);
+      color: rgba(33, 67, 31, 0.88);
+      font-size: 24px;
+      font-weight: 500;
+    }
+
+    .ask-input {
+      flex: 1;
+      border: 0;
+      outline: none;
+      background: transparent;
+      color: rgba(29, 61, 27, 0.92);
+      font-size: 22px;
+      font-weight: 500;
+      font-family: inherit;
+    }
+
+    .ask-input::placeholder {
+      color: rgba(49, 83, 45, 0.55);
+    }
+
+    .spark {
+      font-size: 20px;
+      filter: drop-shadow(0 2px 4px rgba(37, 81, 34, 0.25));
+    }
+
+    .send-btn {
+      margin-left: auto;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 0;
+      background: #101810;
+      color: #ffffff;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+
+    .send-btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .voice-area {
+      min-height: 124px;
+      display: grid;
+      place-items: center;
+      position: relative;
+      padding-top: 10px;
+    }
+
+    .mic-btn {
+      border: 0;
+      width: 82px;
+      height: 82px;
+      border-radius: 50%;
+      background: transparent;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      transition: transform 0.2s ease;
+    }
+
+    .mic-btn:hover {
+      transform: scale(1.05);
+    }
+
+    .mic-btn svg {
+      width: 58px;
+      height: 58px;
+      fill: #0f1510;
+    }
+
+    .lang {
+      position: absolute;
+      bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border: 0;
+      background: linear-gradient(180deg, #8dc180, #77ad6a);
+      color: #edf9e9;
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      border-radius: 999px;
+      padding: 8px 14px;
+      box-shadow: 0 8px 14px rgba(53, 98, 48, 0.2);
+      cursor: pointer;
+    }
+
+    .lang svg {
+      width: 15px;
+      height: 15px;
+      fill: #2f582f;
+      background: rgba(239, 255, 234, 0.4);
+      border-radius: 50%;
+      padding: 2px;
+    }
+
+    .contact {
+      position: absolute;
+      right: 28px;
+      bottom: 8px;
+      color: rgba(33, 67, 31, 0.82);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 18px;
+    }
+
+    .contact:hover {
+      color: rgba(26, 52, 24, 0.95);
+      text-decoration: underline;
+    }
+
+    .response-card {
+      width: min(860px, 96%);
+      margin: 10px auto 0;
+      border-radius: 14px;
+      border: 1px solid rgba(250, 255, 248, 0.48);
+      background: linear-gradient(180deg, rgba(222, 242, 214, 0.72), rgba(201, 228, 190, 0.8));
+      box-shadow: 0 10px 20px rgba(54, 94, 51, 0.1);
+      padding: 12px 14px;
+    }
+
+    .response-title {
+      font-size: 13px;
+      letter-spacing: 0.08em;
+      font-weight: 700;
+      color: rgba(42, 77, 39, 0.68);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+    }
+
+    .response-text {
+      font-size: 16px;
+      color: rgba(28, 55, 27, 0.94);
+      line-height: 1.45;
+      white-space: pre-wrap;
+      min-height: 44px;
+    }
+
+    @media (max-width: 1080px) {
+      .app {
+        grid-template-columns: 240px 1fr;
+      }
+
+      .nav-btn {
+        font-size: 30px;
+      }
+
+      .ask-row {
+        font-size: 20px;
+      }
+    }
+
+    @media (max-width: 860px) {
+      body {
+        padding: 10px;
+      }
+
+      .app {
+        height: auto;
+        min-height: calc(100vh - 20px);
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        border-right: 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+        gap: 14px;
+      }
+
+      nav {
+        flex-direction: row;
+        margin-top: 8px;
+      }
+
+      .nav-btn {
+        font-size: 22px;
+      }
+
+      .main {
+        padding: 14px;
+      }
+
+      .contact {
+        position: static;
+        display: inline-block;
+        margin-top: 6px;
+        margin-left: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <img src="/frontend/image.png" alt="ArogyaAI logo">
+        <span>ArogyaAI</span>
+      </div>
+
+      <nav aria-label="Main navigation">
+        <button id="tab-eligibility" class="nav-btn active" type="button">Scheme Eligibility</button>
+        <button id="tab-triage" class="nav-btn" type="button">Govt Schemes</button>
+      </nav>
+    </aside>
+
+    <section class="main">
+      <div class="top-actions">
+        <button class="profile" type="button" aria-label="User profile">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Zm0 2c-4.42 0-8 2.24-8 5v1h16v-1c0-2.76-3.58-5-8-5Z"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="hero">
+        <img src="/frontend/bgopoo.jpeg" alt="Natural medicine hero image">
+      </div>
+
+      <div class="command-panel">
+        <div class="ask-row">
+          <span class="spark">✦</span>
+          <input id="ask-input" class="ask-input" type="text" placeholder="Ask me anything....">
+          <button id="send-btn" class="send-btn" type="button" aria-label="Send">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
+              <path d="M12 4c.44 0 .8.36.8.8v8.28l3.64-3.64a.8.8 0 1 1 1.12 1.12l-5 5a.8.8 0 0 1-1.12 0l-5-5a.8.8 0 1 1 1.12-1.12l3.64 3.64V4.8c0-.44.36-.8.8-.8Z"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="voice-area">
+          <button id="mic-btn" class="mic-btn" type="button" aria-label="Use microphone">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Zm5-3a1 1 0 0 1 2 0 7 7 0 0 1-6 6.92V21h2a1 1 0 1 1 0 2H9a1 1 0 0 1 0-2h2v-2.08A7 7 0 0 1 5 12a1 1 0 1 1 2 0 5 5 0 0 0 10 0Z"/>
+            </svg>
+          </button>
+
+          <button id="lang-btn" class="lang" type="button" aria-label="Choose language">
+            ENGLISH
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m7 10 5 5 5-5z"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="response-card" aria-live="polite">
+        <div class="response-title" id="response-title">Ready</div>
+        <div class="response-text" id="response-text">Type a question or use the microphone.</div>
+      </div>
+
+      <a class="contact" href="#">Contact Us</a>
+    </section>
+  </main>
+
+  <script>
+    const API_BASE = (window.location.protocol === 'http:' || window.location.protocol === 'https:')
+      ? window.location.origin
+      : 'http://127.0.0.1:8000';
+
+    const sessionId = 'default-session';
+    let currentMode = 'eligibility';
+    let mediaRecorder = null;
+    let audioChunks = [];
+
+    const tabEligibility = document.getElementById('tab-eligibility');
+    const tabTriage = document.getElementById('tab-triage');
+    const askInput = document.getElementById('ask-input');
+    const sendBtn = document.getElementById('send-btn');
+    const micBtn = document.getElementById('mic-btn');
+    const langBtn = document.getElementById('lang-btn');
+    const responseTitle = document.getElementById('response-title');
+    const responseText = document.getElementById('response-text');
+
+    function setResponse(title, text) {
+      responseTitle.textContent = title;
+      responseText.textContent = text;
+    }
+
+    function setMode(mode) {
+      currentMode = mode;
+      const isEligibility = mode === 'eligibility';
+      tabEligibility.classList.toggle('active', isEligibility);
+      tabTriage.classList.toggle('active', !isEligibility);
+      askInput.placeholder = isEligibility
+        ? 'Example: Age 45, income 300000, bpl yes, state Karnataka'
+        : 'Describe symptoms or ask about government schemes...';
+      setResponse(
+        isEligibility ? 'Scheme Eligibility' : 'Govt Schemes',
+        isEligibility
+          ? 'Share age/income/state details to check eligibility.'
+          : 'Ask your question and press send.'
+      );
+    }
+
+    function extractNumber(text, key, fallback) {
+      const regex = new RegExp(`${key}[^0-9]*([0-9]+(?:\\.[0-9]+)?)`, 'i');
+      const match = text.match(regex);
+      return match ? Number(match[1]) : fallback;
+    }
+
+    function buildEligibilityPayload(userText) {
+      const age = extractNumber(userText, 'age', 45);
+      const income = extractNumber(userText, 'income', 300000);
+      const stateMatch = userText.match(/state[^a-zA-Z]*([a-zA-Z ]{2,})/i);
+      const state = stateMatch ? stateMatch[1].trim() : 'Karnataka';
+      const bpl = /\bbpl\b|ration card|below poverty/i.test(userText);
+      const femaleHeaded = /female headed|single mother|widow/i.test(userText);
+      const disabledNoCare = /disabled.*no caregiver|no caregiver/i.test(userText);
+
+      return {
+        income,
+        age,
+        state,
+        bpl_card: bpl,
+        household_type: 'rural',
+        household_members: [
+          { age, gender: 'unknown' }
+        ],
+        secc_no_adult_16_59: age < 16 || age > 59,
+        secc_female_headed: femaleHeaded,
+        secc_disabled_no_caregiver: disabledNoCare,
+        session_id: sessionId
+      };
+    }
+
+    async function fetchJson(path, options) {
+      const response = await fetch(`${API_BASE}${path}`, options);
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || `Request failed: ${response.status}`);
+      }
+      return response.json();
+    }
+
+    async function updateStatus() {
+      try {
+        const status = await fetchJson(`/status?session_id=${encodeURIComponent(sessionId)}`);
+        const latest = status.logs && status.logs.length ? status.logs[status.logs.length - 1] : 'No logs yet';
+        responseText.textContent += `\n\nLatest Status: ${latest}`;
+      } catch {
+        // Non-blocking status refresh
+      }
+    }
+
+    async function handleSend() {
+      const text = askInput.value.trim();
+      if (!text) {
+        setResponse('Input Required', 'Please enter a message first.');
+        return;
+      }
+
+      sendBtn.disabled = true;
+      setResponse('Processing', 'Contacting backend...');
+
+      try {
+        if (currentMode === 'eligibility') {
+          const payload = buildEligibilityPayload(text);
+          const data = await fetchJson('/eligibility', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+
+          const reasons = Array.isArray(data.reasons) ? data.reasons.join(' | ') : 'No reasons returned';
+          const cover = data.benefits?.estimated_cover ?? 'N/A';
+          setResponse(
+            data.eligible ? 'Eligible ✅' : 'Not Eligible ❌',
+            `Coverage: ${cover}\nReason: ${reasons}`
+          );
+        } else {
+          const triage = await fetchJson('/triage', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ symptom_text: text, session_id: sessionId })
+          });
+
+          setResponse(
+            `Risk: ${triage.risk_level}`,
+            triage.guidance || 'No guidance returned.'
+          );
+        }
+
+        await updateStatus();
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        setResponse('API Error', message);
+      } finally {
+        sendBtn.disabled = false;
+      }
+    }
+
+    async function stopRecordingAndTranscribe() {
+      if (!mediaRecorder) return;
+
+      mediaRecorder.stop();
+      micBtn.style.transform = '';
+      setResponse('Mic', 'Processing recorded audio...');
+
+      await new Promise((resolve) => {
+        mediaRecorder.onstop = resolve;
+      });
+
+      const blob = new Blob(audioChunks, { type: 'audio/webm' });
+      audioChunks = [];
+
+      const formData = new FormData();
+      formData.append('file', blob, 'recording.webm');
+
+      try {
+        const result = await fetchJson('/transcribe', {
+          method: 'POST',
+          body: formData
+        });
+        askInput.value = result.transcript || '';
+        setResponse('Transcription', result.transcript || 'No transcript returned.');
+        await updateStatus();
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        setResponse('Transcription Error', message);
+      }
+    }
+
+    async function toggleMicRecording() {
+      try {
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
+          await stopRecordingAndTranscribe();
+          return;
+        }
+
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        audioChunks = [];
+
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data && event.data.size > 0) {
+            audioChunks.push(event.data);
+          }
+        };
+
+        mediaRecorder.start();
+        micBtn.style.transform = 'scale(1.08)';
+        setResponse('Mic Recording', 'Recording started... click mic again to stop.');
+      } catch {
+        setResponse('Mic Unavailable', 'Microphone permission is required to record audio.');
+      }
+    }
+
+    tabEligibility.addEventListener('click', () => setMode('eligibility'));
+    tabTriage.addEventListener('click', () => setMode('triage'));
+    sendBtn.addEventListener('click', handleSend);
+    micBtn.addEventListener('click', toggleMicRecording);
+    askInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        handleSend();
+      }
+    });
+
+    langBtn.addEventListener('click', () => {
+      setResponse('Language', 'English is currently selected.');
+    });
+
+    setMode('eligibility');
+  </script>
+</body>
+</html>

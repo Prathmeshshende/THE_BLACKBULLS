@@ -27,11 +27,45 @@ class TriageResponse(BaseModel):
     guidance: str
 
 
+class SignupRequest(BaseModel):
+    full_name: str = Field(..., min_length=2)
+    email: str = Field(..., min_length=5)
+    password: str = Field(..., min_length=6)
+    phone: str | None = None
+    state: str | None = None
+
+
+class UserResponse(BaseModel):
+    id: int
+    full_name: str
+    email: str
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+
+
+class ProtectedResponse(BaseModel):
+    message: str
+    user: UserResponse
+
+
+class HouseholdMember(BaseModel):
+    age: int = Field(..., ge=0)
+    gender: str = Field(..., min_length=1)
+
+
 class EligibilityRequest(BaseModel):
     income: float = Field(..., ge=0)
     age: int = Field(..., ge=0)
     state: str = Field(..., min_length=2)
     bpl_card: bool | None = None
+    household_type: str = Field(..., min_length=2)
+    household_members: list[HouseholdMember] | None = None
+    secc_no_adult_16_59: bool = False
+    secc_female_headed: bool = False
+    secc_disabled_no_caregiver: bool = False
     session_id: str = "default-session"
 
 

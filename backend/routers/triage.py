@@ -7,6 +7,18 @@ from services.ai_service import AIService
 
 router = APIRouter(tags=["triage"])
 
+# Database integration note:
+# Add `db: AsyncSession = Depends(get_db_session)` to this endpoint when you
+# want to persist triage requests/responses in PostgreSQL.
+#
+# Example:
+# from sqlalchemy.ext.asyncio import AsyncSession
+# from db.session import get_db_session
+#
+# async def classify_triage(..., db: AsyncSession = Depends(get_db_session)):
+#     # TODO: Insert a LogRecord or triage analytics row using SQLAlchemy.
+#     ...
+
 
 class DatabaseClient(Protocol):
     async def log_event(self, session_id: str, message: str) -> None: ...

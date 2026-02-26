@@ -7,6 +7,16 @@ from services.stt_service import STTService
 
 router = APIRouter(tags=["transcription"])
 
+# Database integration note:
+# Add `db: AsyncSession = Depends(get_db_session)` in `/transcribe` when you
+# want to store transcript rows in PostgreSQL.
+#
+# Example imports:
+# from sqlalchemy.ext.asyncio import AsyncSession
+# from db.session import get_db_session
+#
+# Then persist transcript/log rows via SQLAlchemy models in `db/models.py`.
+
 
 class DatabaseClient(Protocol):
     async def log_event(self, session_id: str, message: str) -> None: ...
