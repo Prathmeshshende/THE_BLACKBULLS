@@ -32,26 +32,26 @@ export default function FraudPage() {
         <Sidebar />
         <div className="space-y-4">
           <DashboardTokenPanel token={token} onToken={setToken} />
-          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-soft dark:border-slate-800 dark:bg-slate-900">
+          <div className="rounded-2xl border border-rose-100/80 bg-white/90 p-4 shadow-soft backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/90">
             <h2 className="mb-3 text-lg font-semibold">Fraud Detection</h2>
             <div className="grid gap-2 md:grid-cols-[1fr_1fr_auto_auto]">
               <input
                 type="number"
                 value={income}
                 onChange={(event) => setIncome(Number(event.target.value))}
-                className="rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                className="rounded-xl border border-rose-200/80 bg-white px-3 py-2 text-sm shadow-sm dark:border-slate-700 dark:bg-slate-800"
                 placeholder="Current income"
               />
               <input
                 value={phone}
                 onChange={(event) => setPhone(event.target.value)}
-                className="rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                className="rounded-xl border border-rose-200/80 bg-white px-3 py-2 text-sm shadow-sm dark:border-slate-700 dark:bg-slate-800"
                 placeholder="Phone (optional)"
               />
-              <button type="button" onClick={() => void runCheck()} className="rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700">
+              <button type="button" onClick={() => void runCheck()} className="rounded-xl bg-gradient-to-r from-rose-600 to-orange-500 px-4 py-2 text-sm font-semibold text-white shadow-premium transition hover:opacity-95">
                 Run Check
               </button>
-              <button type="button" onClick={() => void loadFlagged()} className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-200">
+              <button type="button" onClick={() => void loadFlagged()} className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">
                 Load Flagged
               </button>
             </div>

@@ -1,0 +1,26 @@
+<svg width="420" height="120" viewBox="0 0 420 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="aGrad" x1="16" y1="16" x2="92" y2="104" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#D9F99D"/>
+      <stop offset="0.55" stop-color="#84CC16"/>
+      <stop offset="1" stop-color="#166534"/>
+    </linearGradient>
+    <linearGradient id="plusGrad" x1="74" y1="44" x2="106" y2="84" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#86EFAC"/>
+      <stop offset="1" stop-color="#16A34A"/>
+    </linearGradient>
+    <filter id="softShadow" x="0" y="0" width="130" height="120" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#14532D" flood-opacity="0.28"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#softShadow)">
+    <path d="M24 102L55 20H84L115 102H92L85 80H53L46 102H24Z" fill="url(#aGrad)"/>
+    <path d="M69 39L52 82H86L69 39Z" fill="#166534"/>
+    <rect x="77" y="48" width="30" height="30" rx="8" fill="url(#plusGrad)"/>
+    <rect x="89.5" y="54" width="5" height="18" rx="2.5" fill="#F0FDF4"/>
+    <rect x="83" y="60.5" width="18" height="5" rx="2.5" fill="#F0FDF4"/>
+  </g>
+
+  <text x="140" y="78" fill="#166534" font-size="56" font-weight="800" font-family="Manrope, Inter, Segoe UI, Arial, sans-serif">Arogya AI</text>
+</svg>

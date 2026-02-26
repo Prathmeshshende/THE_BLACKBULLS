@@ -47,10 +47,10 @@ export default function CallcenterPage() {
         <Sidebar />
         <div className="space-y-4">
           <DashboardTokenPanel token={token} onToken={setToken} />
-          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-soft dark:border-slate-800 dark:bg-slate-900">
+          <div className="rounded-2xl border border-emerald-100/80 bg-white/90 p-4 shadow-soft backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/90">
             <div className="flex items-center justify-between gap-2">
               <h2 className="text-lg font-semibold">Call Center Replacement Layer</h2>
-              <button type="button" onClick={() => void loadCalls()} className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">
+              <button type="button" onClick={() => void loadCalls()} className="rounded-xl bg-brand-gradient px-4 py-2 text-sm font-semibold text-white shadow-premium transition hover:opacity-95">
                 Refresh Active Calls
               </button>
             </div>

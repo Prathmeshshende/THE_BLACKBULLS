@@ -16,8 +16,8 @@ export default function RiskIndicator({ risk, emergency, language = "en" }: Prop
       : "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300";
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-soft dark:border-slate-800 dark:bg-slate-900">
-      <h3 className="text-sm font-semibold text-slate-500">{language === "hi" ? "जोखिम संकेतक" : "Risk Indicator"}</h3>
+    <div className="rounded-2xl border border-emerald-100/80 bg-white/90 p-4 shadow-soft backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/90">
+      <h3 className="text-sm font-semibold uppercase tracking-[0.1em] text-slate-500">{language === "hi" ? "जोखिम संकेतक" : "Risk Indicator"}</h3>
       <div className={`mt-3 inline-flex rounded-full px-3 py-1 text-sm font-semibold ${palette}`}>
         {displayRisk}
       </div>

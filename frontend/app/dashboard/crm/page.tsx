@@ -61,7 +61,7 @@ export default function CrmPage() {
               onClick={() => {
                 void refreshUsers();
               }}
-              className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+              className="rounded-xl bg-brand-gradient px-4 py-2 text-sm font-semibold text-white shadow-premium transition hover:opacity-95"
             >
               Load CRM Users
             </button>
@@ -70,7 +70,7 @@ export default function CrmPage() {
               onClick={() => {
                 void createSampleInteraction();
               }}
-              className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+              className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
             >
               Store Sample Interaction
             </button>
@@ -79,20 +79,20 @@ export default function CrmPage() {
           <CRMTable users={users} records={records} onViewHistory={handleViewHistory} onMarkFollowUp={handleMarkFollowUp} />
 
           {openHistory ? (
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-soft dark:border-slate-800 dark:bg-slate-900">
+            <div className="rounded-2xl border border-emerald-100/80 bg-white/90 p-4 shadow-soft backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/90">
               <div className="mb-3 flex items-center justify-between">
                 <h3 className="text-base font-semibold">Interaction History</h3>
                 <button
                   type="button"
                   onClick={() => setOpenHistory(false)}
-                  className="rounded-lg border border-slate-300 px-2.5 py-1 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-200"
+                  className="rounded-lg border border-slate-300 px-2.5 py-1 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200"
                 >
                   Close
                 </button>
               </div>
               <div className="space-y-2">
                 {history.map((row) => (
-                  <div key={row.id} className="rounded-lg border border-slate-200 p-3 text-sm dark:border-slate-700">
+                  <div key={row.id} className="rounded-xl border border-slate-200/90 bg-white/80 p-3 text-sm dark:border-slate-700 dark:bg-slate-900/70">
                     <p className="font-medium">Risk: {row.risk_level}</p>
                     <p>Sentiment: {row.sentiment_score}</p>
                     <p>Eligibility: {row.eligibility_status}</p>

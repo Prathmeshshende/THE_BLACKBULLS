@@ -30,16 +30,16 @@ export default function DashboardPage() {
       <section className="mx-auto grid max-w-6xl gap-6 px-6 py-8 md:grid-cols-[260px_1fr]">
         <Sidebar />
         <div className="space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-soft dark:border-slate-800 dark:bg-slate-900">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-100/80 bg-white/90 p-5 shadow-soft backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/90">
             <div>
-              <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">Dashboard Controls</p>
+              <p className="text-sm font-semibold uppercase tracking-[0.1em] text-slate-700 dark:text-slate-200">Dashboard Controls</p>
               <p className="text-xs text-slate-500 dark:text-slate-400">Select period and refresh key metrics.</p>
             </div>
             <div className="flex items-center gap-2">
               <select
                 value={period}
                 onChange={(event) => setPeriod(event.target.value as "today" | "week" | "month")}
-                className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                className="rounded-xl border border-emerald-200/80 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
               >
                 <option value="today">Today</option>
                 <option value="week">This Week</option>
@@ -48,7 +48,7 @@ export default function DashboardPage() {
               <button
                 type="button"
                 onClick={() => setRefreshTick((previous) => previous + 1)}
-                className="rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"
+                className="rounded-xl bg-brand-gradient px-4 py-2.5 text-sm font-semibold text-white shadow-premium transition hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"
               >
                 Refresh Metrics
               </button>
@@ -56,15 +56,15 @@ export default function DashboardPage() {
           </div>
 
           <div className="grid gap-4 sm:grid-cols-3">
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-soft dark:border-slate-800 dark:bg-slate-900">
+            <div className="rounded-2xl border border-emerald-100/80 bg-white/90 p-4 shadow-soft backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/90">
               <p className="text-sm text-slate-500">Today Calls</p>
               <p className="mt-2 text-3xl font-bold">{stats.todayCalls}</p>
             </div>
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-soft dark:border-slate-800 dark:bg-slate-900">
+            <div className="rounded-2xl border border-rose-100/80 bg-white/90 p-4 shadow-soft backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/90">
               <p className="text-sm text-slate-500">High Risk Cases</p>
               <p className="mt-2 text-3xl font-bold text-rose-600">{stats.highRiskCases}</p>
             </div>
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-soft dark:border-slate-800 dark:bg-slate-900">
+            <div className="rounded-2xl border border-emerald-100/80 bg-white/90 p-4 shadow-soft backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/90">
               <p className="text-sm text-slate-500">Scheme Approvals</p>
               <p className="mt-2 text-3xl font-bold text-emerald-600">{stats.schemeApprovals}%</p>
             </div>

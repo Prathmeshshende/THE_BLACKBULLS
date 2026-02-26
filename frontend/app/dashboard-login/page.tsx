@@ -1,10 +1,10 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Navbar from "@/components/Navbar";
 
-export default function DashboardLoginPage() {
+function DashboardLoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const nextUrl = searchParams.get("next") || "/dashboard";
@@ -43,8 +43,8 @@ export default function DashboardLoginPage() {
     <main className="min-h-screen bg-slate-50 dark:bg-slate-950">
       <Navbar />
       <section className="mx-auto max-w-md px-6 py-16">
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-soft dark:border-slate-800 dark:bg-slate-900">
-          <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Dashboard Access</h1>
+        <div className="rounded-3xl border border-white/60 bg-white/85 p-6 shadow-premium backdrop-blur-xl dark:border-slate-800 dark:bg-slate-900/90">
+          <h1 className="bg-gradient-to-r from-brand-700 via-violet-700 to-cyan-700 bg-clip-text text-xl font-semibold text-transparent dark:from-brand-300 dark:via-violet-300 dark:to-cyan-300">Dashboard Access</h1>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">Enter the dashboard password to continue.</p>
 
           <form onSubmit={onSubmit} className="mt-5 space-y-3">
@@ -54,12 +54,12 @@ export default function DashboardLoginPage() {
               onChange={(event) => setPassword(event.target.value)}
               placeholder="Enter password"
               required
-              className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-800"
+              className="w-full rounded-xl border border-brand-200/80 bg-white px-3 py-2.5 text-sm shadow-sm dark:border-slate-700 dark:bg-slate-800"
             />
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70 dark:focus-visible:ring-offset-slate-900"
+              className="w-full rounded-xl bg-gradient-to-r from-brand-600 to-violet-600 px-4 py-2.5 text-sm font-semibold text-white shadow-premium transition hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70 dark:focus-visible:ring-offset-slate-900"
             >
               {loading ? "Verifying..." : "Unlock Dashboard"}
             </button>
@@ -69,5 +69,13 @@ export default function DashboardLoginPage() {
         </div>
       </section>
     </main>
+  );
+}
+
+export default function DashboardLoginPage() {
+  return (
+    <Suspense fallback={<main className="min-h-screen bg-slate-50 dark:bg-slate-950" />}>
+      <DashboardLoginPageContent />
+    </Suspense>
   );
 }

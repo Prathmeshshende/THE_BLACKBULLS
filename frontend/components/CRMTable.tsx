@@ -9,12 +9,12 @@ type Props = {
 
 export default function CRMTable({ users, records, onViewHistory, onMarkFollowUp }: Props) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-soft dark:border-slate-800 dark:bg-slate-900">
+    <div className="rounded-2xl border border-emerald-100/80 bg-white/90 p-4 shadow-soft backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/90">
       <h3 className="mb-3 text-base font-semibold text-slate-900 dark:text-white">CRM Users</h3>
       <div className="overflow-auto">
         <table className="w-full text-left text-sm">
           <thead>
-            <tr className="border-b border-slate-200 dark:border-slate-700">
+            <tr className="border-b border-slate-200/90 dark:border-slate-700">
               <th className="px-2 py-2">User</th>
               <th className="px-2 py-2">Email</th>
               <th className="px-2 py-2">Phone</th>
@@ -36,7 +36,7 @@ export default function CRMTable({ users, records, onViewHistory, onMarkFollowUp
                       <button
                         type="button"
                         onClick={() => onViewHistory(user.id)}
-                        className="rounded-lg border border-slate-300 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                        className="rounded-lg border border-slate-300 px-2.5 py-1 text-xs font-semibold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
                       >
                         History
                       </button>
@@ -44,7 +44,7 @@ export default function CRMTable({ users, records, onViewHistory, onMarkFollowUp
                         <button
                           type="button"
                           onClick={() => onMarkFollowUp(latestRecord.id)}
-                          className="rounded-lg bg-emerald-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-emerald-700"
+                          className="rounded-lg bg-brand-gradient px-2.5 py-1 text-xs font-semibold text-white shadow-soft transition hover:opacity-95"
                         >
                           Mark Follow-up
                         </button>

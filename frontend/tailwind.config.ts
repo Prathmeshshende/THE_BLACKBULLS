@@ -17,9 +17,19 @@ const config: Config = {
           600: "#15803d",
           700: "#166534",
         },
+        luxury: {
+          500: "#0f766e",
+          600: "#0d9488",
+          700: "#0f766e",
+          800: "#115e59",
+        },
       },
       boxShadow: {
-        soft: "0 10px 30px rgba(15, 23, 42, 0.08)",
+        soft: "0 14px 42px rgba(15, 23, 42, 0.12)",
+        premium: "0 24px 64px rgba(15, 23, 42, 0.18)",
+      },
+      backgroundImage: {
+        "brand-gradient": "linear-gradient(135deg, #0f766e 0%, #0ea5e9 45%, #10b981 100%)",
       },
     },
   },

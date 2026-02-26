@@ -16,8 +16,8 @@ export default function DropRateChart({ dropRate, escalationRate, conversionRate
   ];
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-soft dark:border-slate-800 dark:bg-slate-900">
-      <h3 className="mb-3 text-sm font-semibold text-slate-500">Operational Rates</h3>
+    <div className="rounded-2xl border border-emerald-100/80 bg-white/90 p-4 shadow-soft backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/90">
+      <h3 className="mb-3 text-sm font-semibold uppercase tracking-[0.1em] text-slate-500">Operational Rates</h3>
       <div className="h-64">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data}>

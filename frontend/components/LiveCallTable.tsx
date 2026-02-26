@@ -7,7 +7,7 @@ type Props = {
 
 export default function LiveCallTable({ calls, onEscalate }: Props) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-soft dark:border-slate-800 dark:bg-slate-900">
+    <div className="rounded-2xl border border-emerald-100/80 bg-white/90 p-4 shadow-soft backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/90">
       <h3 className="mb-3 text-base font-semibold text-slate-900 dark:text-white">Active Calls</h3>
       <div className="overflow-auto">
         <table className="w-full text-left text-sm">
@@ -33,7 +33,7 @@ export default function LiveCallTable({ calls, onEscalate }: Props) {
                   <button
                     type="button"
                     onClick={() => onEscalate(call.caller_id)}
-                    className="rounded-lg bg-amber-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-amber-700"
+                    className="rounded-lg bg-gradient-to-r from-amber-500 to-rose-500 px-2.5 py-1 text-xs font-semibold text-white shadow-soft transition hover:opacity-95"
                   >
                     Escalate
                   </button>

@@ -6,6 +6,7 @@ import EligibilityCard from "@/components/EligibilityCard";
 import Navbar from "@/components/Navbar";
 import { runEligibility, type EligibilityResponse } from "@/lib/api";
 import { ensureBackendToken, isGoogleLoggedIn } from "@/lib/client-auth";
+import { getAppLanguage, setAppLanguage } from "@/lib/language";
 
 type VoiceLanguage = "en" | "hi";
 
@@ -17,7 +18,7 @@ export default function EligibilityCheckerPage() {
   const [submitError, setSubmitError] = useState("");
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [voiceError, setVoiceError] = useState("");
-  const [voiceLanguage, setVoiceLanguage] = useState<VoiceLanguage>("en");
+  const [voiceLanguage, setVoiceLanguage] = useState<VoiceLanguage>(() => getAppLanguage());
 
   const primaryButtonClass =
     "rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70 dark:focus-visible:ring-offset-slate-900";
@@ -48,6 +49,10 @@ export default function EligibilityCheckerPage() {
       }
     };
   }, [router, token]);
+
+  useEffect(() => {
+    setAppLanguage(voiceLanguage);
+  }, [voiceLanguage]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -159,7 +164,7 @@ export default function EligibilityCheckerPage() {
 
   return (
     <main className="min-h-screen bg-slate-50 dark:bg-slate-950">
-      <Navbar language={voiceLanguage} />
+      <Navbar language={voiceLanguage} onLanguageChange={(nextLanguage) => setVoiceLanguage(nextLanguage)} />
       <section className="mx-auto max-w-4xl space-y-6 px-6 py-8">
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-soft dark:border-slate-800 dark:bg-slate-900">
           <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Eligibility Checker</h1>

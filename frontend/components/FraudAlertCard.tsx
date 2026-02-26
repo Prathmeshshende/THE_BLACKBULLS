@@ -6,10 +6,10 @@ type Props = {
 
 export default function FraudAlertCard({ item }: Props) {
   return (
-    <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 shadow-soft dark:border-rose-900 dark:bg-rose-950/30">
+    <div className="rounded-2xl border border-rose-200/80 bg-gradient-to-br from-rose-50 to-orange-50 p-4 shadow-soft dark:border-rose-900 dark:bg-rose-950/30">
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm font-semibold text-rose-700 dark:text-rose-300">Fraud Alert</p>
-        <span className="rounded-full bg-rose-600 px-2.5 py-1 text-xs font-semibold text-white">
+        <span className="rounded-full bg-gradient-to-r from-rose-600 to-orange-500 px-2.5 py-1 text-xs font-semibold text-white shadow-soft">
           {item.fraud_probability}%
         </span>
       </div>

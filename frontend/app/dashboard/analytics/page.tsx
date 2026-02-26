@@ -50,13 +50,13 @@ export default function AnalyticsPage() {
         <Sidebar />
         <div className="space-y-4">
           <DashboardTokenPanel token={token} onToken={setToken} />
-          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-soft dark:border-slate-800 dark:bg-slate-900">
+          <div className="rounded-2xl border border-emerald-100/80 bg-white/90 p-4 shadow-soft backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/90">
             <button
               type="button"
               onClick={() => {
                 void loadDashboard();
               }}
-              className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+              className="rounded-xl bg-brand-gradient px-4 py-2 text-sm font-semibold text-white shadow-premium transition hover:opacity-95"
             >
               Load Analytics Dashboard
             </button>
@@ -64,7 +64,7 @@ export default function AnalyticsPage() {
           </div>
 
           <div className="grid gap-4 lg:grid-cols-2">
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-soft dark:border-slate-800 dark:bg-slate-900">
+            <div className="rounded-2xl border border-emerald-100/80 bg-white/90 p-4 shadow-soft backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/90">
               <h3 className="mb-3 text-sm font-semibold text-slate-500">Calls Per Day</h3>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
@@ -79,7 +79,7 @@ export default function AnalyticsPage() {
               </div>
             </div>
 
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-soft dark:border-slate-800 dark:bg-slate-900">
+            <div className="rounded-2xl border border-emerald-100/80 bg-white/90 p-4 shadow-soft backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/90">
               <h3 className="mb-3 text-sm font-semibold text-slate-500">Risk Distribution</h3>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
@@ -104,15 +104,15 @@ export default function AnalyticsPage() {
           />
 
           <div className="grid gap-4 sm:grid-cols-3">
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-soft dark:border-slate-800 dark:bg-slate-900">
+            <div className="rounded-2xl border border-emerald-100/80 bg-white/90 p-4 shadow-soft backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/90">
               <p className="text-sm text-slate-500">Eligibility Approval Rate</p>
               <p className="mt-2 text-2xl font-bold">{metrics?.eligibility_approval_rate ?? 0}%</p>
             </div>
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-soft dark:border-slate-800 dark:bg-slate-900">
+            <div className="rounded-2xl border border-rose-100/80 bg-white/90 p-4 shadow-soft backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/90">
               <p className="text-sm text-slate-500">Fraud Cases</p>
               <p className="mt-2 text-2xl font-bold text-rose-600">{metrics?.fraud_cases ?? 0}</p>
             </div>
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-soft dark:border-slate-800 dark:bg-slate-900">
+            <div className="rounded-2xl border border-emerald-100/80 bg-white/90 p-4 shadow-soft backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/90">
               <p className="text-sm text-slate-500">Conversion Rate</p>
               <p className="mt-2 text-2xl font-bold text-emerald-600">{metrics?.conversion_rate ?? 0}%</p>
             </div>

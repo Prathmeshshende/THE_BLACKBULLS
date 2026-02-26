@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import RiskIndicator from "@/components/RiskIndicator";
 import VoiceRecorder from "@/components/VoiceRecorder";
+import { getAppLanguage, setAppLanguage } from "@/lib/language";
 import {
   generateVoiceTTS,
   login,
@@ -40,7 +41,7 @@ export default function VoicePage() {
   const [authError, setAuthError] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
   const [autoVoiceReply, setAutoVoiceReply] = useState(true);
-  const [voiceLanguage, setVoiceLanguage] = useState<VoiceLanguage>("en");
+  const [voiceLanguage, setVoiceLanguage] = useState<VoiceLanguage>(() => getAppLanguage());
   const [voiceError, setVoiceError] = useState("");
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [audioUnlocked, setAudioUnlocked] = useState(false);
@@ -340,6 +341,10 @@ export default function VoicePage() {
       window.speechSynthesis.getVoices();
     }
   }, []);
+
+  useEffect(() => {
+    setAppLanguage(voiceLanguage);
+  }, [voiceLanguage]);
 
   const safePlayAudio = async (audioUrl: string) => {
     if (!audioRef.current) {
@@ -973,7 +978,7 @@ export default function VoicePage() {
 
   return (
     <main className="min-h-screen bg-slate-50 dark:bg-slate-950">
-      <Navbar language={voiceLanguage} />
+      <Navbar language={voiceLanguage} onLanguageChange={(nextLanguage) => setVoiceLanguage(nextLanguage)} />
       <section className="mx-auto max-w-6xl space-y-6 px-6 py-8">
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-soft dark:border-slate-800 dark:bg-slate-900">
           <div className="flex flex-wrap items-center gap-3">
