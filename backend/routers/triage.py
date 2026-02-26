@@ -17,7 +17,7 @@ async def classify_triage(
     current_user: User = Depends(get_current_user),
 ) -> TriageResponse:
     # Keep the route thin: business logic stays in services/triage_service.py.
-    result = await triage_service.analyze_symptoms(data.symptom_text)
+    result = await triage_service.analyze_symptoms(data.symptom_text, data.language)
 
     interaction = InteractionLog(
         user_id=current_user.id,

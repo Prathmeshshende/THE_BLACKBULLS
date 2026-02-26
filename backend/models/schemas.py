@@ -15,6 +15,7 @@ class VoiceTranscriptionResponse(BaseModel):
 
 class TriageRequest(BaseModel):
     symptom_text: str = Field(..., min_length=1)
+    language: str = Field("en", pattern="^(en|hi)$")
 
 
 class TriageResponse(BaseModel):
@@ -44,6 +45,7 @@ class SchemeDecision(BaseModel):
     scheme_name: str
     eligible: bool
     reason: str
+    application_link: str | None = None
 
 
 class EligibilityResponse(BaseModel):

@@ -57,83 +57,196 @@ async def check_scheme_eligibility(data: EligibilityRequest) -> dict[str, object
         reasons.append("Healthcare utilization note: frequent hospital usage suggests higher support need.")
 
     scheme_decisions: list[dict[str, object]] = []
+    state_normalized = data.state.strip().lower()
+    scheme_application_links: dict[str, str] = {
+        "Ayushman Bharat - PM-JAY": "https://beneficiary.nha.gov.in/",
+        "ABHA Health ID (Ayushman Bharat Digital Mission)": "https://abha.abdm.gov.in/abha/v3/",
+        "National Dialysis Programme (under NHM)": "https://nhm.gov.in/",
+        "Pradhan Mantri Matru Vandana Yojana (PMMVY)": "https://pmmvy.wcd.gov.in/",
+        "Janani Suraksha Yojana (JSY)": "https://nhm.gov.in/",
+        "Janani Shishu Suraksha Karyakram (JSSK)": "https://nhm.gov.in/",
+        "Rashtriya Bal Swasthya Karyakram (RBSK)": "https://nhm.gov.in/",
+        "Rashtriya Kishor Swasthya Karyakram (RKSK)": "https://nhm.gov.in/",
+        "National Programme for Health Care of Elderly (NPHCE)": "https://nhm.gov.in/",
+        "Rashtriya Vayoshri Yojana (assistive support for senior citizens)": "https://www.alimco.in/",
+        "Disability Health Support (state/central disability-linked benefits)": "https://www.swavlambancard.gov.in/",
+        "Chronic Disease Support Programmes (state/NHM clinics)": "https://nhm.gov.in/",
+        "National TB Elimination Programme (NTEP)": "https://tbcindia.gov.in/",
+        "National AIDS Control Programme (NACP) - free HIV services": "https://naco.gov.in/",
+        "Mahatma Jyotiba Phule Jan Arogya Yojana (Maharashtra)": "https://www.jeevandayee.gov.in/",
+        "Mukhyamantri Amrutam / MA Vatsalya (Gujarat)": "https://maa.gujarat.gov.in/",
+        "Aarogyasri (Telangana)": "https://www.aarogyasri.telangana.gov.in/",
+        "Dr. YSR Aarogyasri (Andhra Pradesh)": "https://www.ysraarogyasri.ap.gov.in/",
+        "Karunya Arogya Suraksha Padhathi (Kerala)": "https://sha.kerala.gov.in/karunya-arogya-suraksha-padhathi-kasp/",
+        "Chief Minister's Comprehensive Health Insurance Scheme (Tamil Nadu)": "https://www.cmchistn.com/",
+        "Biju Swasthya Kalyan Yojana (Odisha)": "https://bsky.odisha.gov.in/",
+        "Mukhyamantri Chiranjeevi Health Insurance (Rajasthan)": "https://chiranjeevi.rajasthan.gov.in/",
+        "Ayushman Bharat - Mukhyamantri Jan Arogya Yojana (Karnataka)": "https://arogya.karnataka.gov.in/",
+        "Ayushman Bharat / State Health Assurance (Uttar Pradesh family schemes)": "https://pmjay.gov.in/",
+    }
 
-    pmjay_eligible = income_ok or bpl_ok
-    scheme_decisions.append(
-        {
-            "scheme_name": "Ayushman Bharat / PM-JAY",
-            "eligible": pmjay_eligible,
-            "reason": (
-                "Income/BPL criteria matched."
-                if pmjay_eligible
-                else "Income and BPL criteria not matched."
-            ),
-        }
+    def add_scheme(name: str, eligible_flag: bool, ok_reason: str, fail_reason: str) -> None:
+        scheme_decisions.append(
+            {
+                "scheme_name": name,
+                "eligible": bool(eligible_flag),
+                "reason": ok_reason if eligible_flag else fail_reason,
+                "application_link": scheme_application_links.get(name),
+            }
+        )
+
+    # --- National umbrella / insurance schemes ---
+    add_scheme(
+        "Ayushman Bharat - PM-JAY",
+        income_ok or bpl_ok or family_large,
+        "Household meets low-income/BPL or family-risk profile often mapped to PM-JAY verification.",
+        "Usually requires low-income/BPL or similar deprivation indicators during official verification.",
+    )
+    add_scheme(
+        "ABHA Health ID (Ayushman Bharat Digital Mission)",
+        data.has_government_id,
+        "Government ID available; digital health ID enrollment is typically feasible.",
+        "Government ID usually required for ABHA registration.",
+    )
+    add_scheme(
+        "National Dialysis Programme (under NHM)",
+        data.has_chronic_illness and high_utilization,
+        "Chronic condition with repeated hospital utilization may qualify for subsidized dialysis pathway.",
+        "Typically considered when chronic renal/related high-burden clinical need is documented.",
     )
 
-    senior_scheme_eligible = senior_ok
-    scheme_decisions.append(
-        {
-            "scheme_name": "Senior Citizen Health Support",
-            "eligible": senior_scheme_eligible,
-            "reason": (
-                "Age criterion (70+) matched."
-                if senior_scheme_eligible
-                else "Age criterion (70+) not matched."
-            ),
-        }
+    # --- Maternal / child health schemes ---
+    add_scheme(
+        "Pradhan Mantri Matru Vandana Yojana (PMMVY)",
+        data.is_pregnant and data.has_government_id,
+        "Pregnancy and ID status indicate potential PMMVY entitlement.",
+        "Generally requires pregnancy-linked registration and identity documentation.",
+    )
+    add_scheme(
+        "Janani Suraksha Yojana (JSY)",
+        data.is_pregnant and (income_ok or bpl_ok or (data.rural_resident and data.family_size >= 4)),
+        "Maternal profile with socio-economic vulnerability matches common JSY screening factors.",
+        "Usually prioritized for pregnant beneficiaries with socioeconomic vulnerability and institutional delivery linkage.",
+    )
+    add_scheme(
+        "Janani Shishu Suraksha Karyakram (JSSK)",
+        data.is_pregnant or data.age <= 5,
+        "Maternal/newborn-child care profile aligns with JSSK support pathway.",
+        "Primarily applicable for pregnancy, childbirth, newborn, and young child care episodes.",
+    )
+    add_scheme(
+        "Rashtriya Bal Swasthya Karyakram (RBSK)",
+        data.age <= 18,
+        "Child/adolescent age group fits RBSK screening age bands.",
+        "RBSK is generally targeted to newborn/child/adolescent age groups.",
+    )
+    add_scheme(
+        "Rashtriya Kishor Swasthya Karyakram (RKSK)",
+        10 <= data.age <= 19,
+        "Age falls in adolescent bracket commonly covered under RKSK.",
+        "RKSK is mainly designed for adolescent age group.",
     )
 
-    chronic_support_eligible = data.has_chronic_illness and data.annual_hospital_visits >= 2 and extended_income_ok
-    scheme_decisions.append(
-        {
-            "scheme_name": "Chronic Care Assistance Program",
-            "eligible": chronic_support_eligible,
-            "reason": (
-                "Chronic condition with frequent visits and income threshold matched."
-                if chronic_support_eligible
-                else "Requires chronic illness + >=2 yearly visits + income within threshold."
-            ),
-        }
+    # --- Senior, disability, chronic care ---
+    add_scheme(
+        "National Programme for Health Care of Elderly (NPHCE)",
+        data.age >= 60,
+        "Senior age profile maps to geriatric care programme pathways.",
+        "Generally oriented toward elderly beneficiaries (typically 60+).",
+    )
+    add_scheme(
+        "Rashtriya Vayoshri Yojana (assistive support for senior citizens)",
+        data.age >= 60 and income_ok,
+        "Senior low-income profile may fit assistive-care screening.",
+        "Usually requires both senior age and socioeconomic need criteria.",
+    )
+    add_scheme(
+        "Disability Health Support (state/central disability-linked benefits)",
+        data.has_disability,
+        "Declared disability indicates potential eligibility for disability-linked health benefits.",
+        "Disability-linked health support generally requires certified disability status.",
+    )
+    add_scheme(
+        "Chronic Disease Support Programmes (state/NHM clinics)",
+        data.has_chronic_illness,
+        "Chronic illness profile aligns with long-term disease support pathways.",
+        "Usually triggered when chronic disease documentation is available.",
     )
 
-    maternal_scheme_eligible = data.is_pregnant and extended_income_ok
-    scheme_decisions.append(
-        {
-            "scheme_name": "Maternal Health Benefit Scheme",
-            "eligible": maternal_scheme_eligible,
-            "reason": (
-                "Pregnancy support criteria matched."
-                if maternal_scheme_eligible
-                else "Requires pregnancy status and eligible income band."
-            ),
-        }
+    # --- Disease specific public programmes ---
+    add_scheme(
+        "National TB Elimination Programme (NTEP)",
+        data.has_chronic_illness and high_utilization,
+        "Frequent clinical burden may warrant TB-program screening/referral workflow.",
+        "Programme linkage generally depends on disease-specific diagnosis workflow.",
+    )
+    add_scheme(
+        "National AIDS Control Programme (NACP) - free HIV services",
+        data.has_chronic_illness,
+        "Chronic-care pathway can include referral for free HIV-related public services when indicated.",
+        "Service access is disease-indication based and confirmed by medical evaluation.",
     )
 
-    disability_scheme_eligible = data.has_disability and extended_income_ok
-    scheme_decisions.append(
-        {
-            "scheme_name": "Disability Health Protection Scheme",
-            "eligible": disability_scheme_eligible,
-            "reason": (
-                "Disability support criteria matched."
-                if disability_scheme_eligible
-                else "Requires disability status and eligible income band."
-            ),
-        }
+    # --- Major state health protection schemes (broad screening by state + vulnerability) ---
+    add_scheme(
+        "Mahatma Jyotiba Phule Jan Arogya Yojana (Maharashtra)",
+        "maharashtra" in state_normalized and (income_ok or bpl_ok or data.rural_resident),
+        "State and vulnerability profile broadly align with MJPJAY screening factors.",
+        "Primarily for Maharashtra residents meeting socioeconomic criteria.",
     )
-
-    rural_family_scheme_eligible = data.rural_resident and data.family_size >= 5 and extended_income_ok
-    scheme_decisions.append(
-        {
-            "scheme_name": "Rural Family Health Relief Scheme",
-            "eligible": rural_family_scheme_eligible,
-            "reason": (
-                "Rural large-family support criteria matched."
-                if rural_family_scheme_eligible
-                else "Requires rural residence, family size >=5, and eligible income band."
-            ),
-        }
+    add_scheme(
+        "Mukhyamantri Amrutam / MA Vatsalya (Gujarat)",
+        "gujarat" in state_normalized and (income_ok or bpl_ok),
+        "Gujarat residence with low-income/BPL indicators matches common MA scheme filters.",
+        "Requires Gujarat residence plus eligible income/deprivation criteria.",
+    )
+    add_scheme(
+        "Aarogyasri (Telangana)",
+        "telangana" in state_normalized and (income_ok or bpl_ok),
+        "Telangana household with vulnerable economic profile may fit Aarogyasri pathway.",
+        "Usually mapped for Telangana residents with qualifying socioeconomic category.",
+    )
+    add_scheme(
+        "Dr. YSR Aarogyasri (Andhra Pradesh)",
+        ("andhra" in state_normalized or "ap" == state_normalized) and (income_ok or bpl_ok),
+        "Andhra Pradesh and low-income/BPL profile align with YSR Aarogyasri screening.",
+        "Generally requires AP residence and qualifying socioeconomic status.",
+    )
+    add_scheme(
+        "Karunya Arogya Suraksha Padhathi (Kerala)",
+        "kerala" in state_normalized and (income_ok or bpl_ok or data.has_chronic_illness),
+        "Kerala residence with financial/clinical vulnerability fits Karunya-style support checks.",
+        "Typically requires Kerala residence and approved vulnerability/clinical criteria.",
+    )
+    add_scheme(
+        "Chief Minister's Comprehensive Health Insurance Scheme (Tamil Nadu)",
+        ("tamil" in state_normalized or "tn" == state_normalized) and (income_ok or bpl_ok),
+        "Tamil Nadu residence with income vulnerability aligns with CMCHIS screening.",
+        "Requires Tamil Nadu residence and approved family income/category criteria.",
+    )
+    add_scheme(
+        "Biju Swasthya Kalyan Yojana (Odisha)",
+        "odisha" in state_normalized and (income_ok or bpl_ok or data.rural_resident),
+        "Odisha residence and vulnerability indicators align with BSKY-style public support.",
+        "Usually requires Odisha residence with approved beneficiary category.",
+    )
+    add_scheme(
+        "Mukhyamantri Chiranjeevi Health Insurance (Rajasthan)",
+        "rajasthan" in state_normalized and (income_ok or bpl_ok),
+        "Rajasthan household with vulnerable income profile matches common Chiranjeevi checks.",
+        "Requires Rajasthan residence and qualifying enrollment category.",
+    )
+    add_scheme(
+        "Ayushman Bharat - Mukhyamantri Jan Arogya Yojana (Karnataka)",
+        "karnataka" in state_normalized and (income_ok or bpl_ok or family_large),
+        "Karnataka residence with socioeconomic vulnerability aligns with state AB-PMJAY linkage.",
+        "Usually needs Karnataka residence plus eligible deprivation/income category.",
+    )
+    add_scheme(
+        "Ayushman Bharat / State Health Assurance (Uttar Pradesh family schemes)",
+        ("uttar pradesh" in state_normalized or state_normalized == "up") and (income_ok or bpl_ok),
+        "UP residence and vulnerable income profile fit common public health assurance filters.",
+        "Primarily requires UP residence and qualifying socioeconomic status.",
     )
 
     eligible = any(bool(item["eligible"]) for item in scheme_decisions)
@@ -165,9 +278,14 @@ async def check_scheme_eligibility(data: EligibilityRequest) -> dict[str, object
             "Preliminary eligibility appears negative on current inputs; document verification and local scheme mapping are recommended."
         )
 
+    top_eligible_scheme = next(
+        (item["scheme_name"] for item in scheme_decisions if bool(item["eligible"])),
+        "No strongly matched scheme from current rule set",
+    )
+
     benefits = {
-        "scheme_name": "Ayushman Bharat / PM-JAY",
-        "coverage": "₹5 lakh per family",
+        "scheme_name": str(top_eligible_scheme),
+        "coverage": "Scheme-dependent (often hospitalization support under public entitlement norms)",
         "state": data.state,
         "estimated_priority": "High" if score >= 70 else "Medium" if score >= 40 else "Low",
         "household_context": f"Family size: {data.family_size}",
