@@ -1,30 +1,60 @@
-from typing import Any
+from datetime import datetime
 
 from pydantic import BaseModel, Field
 
 
-class TranscriptionRequest(BaseModel):
-    session_id: str = "default-session"
+MEDICAL_DISCLAIMER = (
+    "This is not a medical diagnosis. Please consult a licensed medical professional."
+)
 
 
-class TranscriptionResponse(BaseModel):
+class VoiceTranscriptionResponse(BaseModel):
     transcript: str
-    session_id: str
-
-
-class StreamingTranscriptionResponse(BaseModel):
-    transcript: str
-    is_final: bool = False
+    disclaimer: str = MEDICAL_DISCLAIMER
 
 
 class TriageRequest(BaseModel):
     symptom_text: str = Field(..., min_length=1)
-    session_id: str = "default-session"
 
 
 class TriageResponse(BaseModel):
     risk_level: str
-    guidance: str
+    emergency_flag: bool
+    advisory_message: str
+    disclaimer: str = MEDICAL_DISCLAIMER
+    detected_symptoms: list[str]
+
+
+class EligibilityRequest(BaseModel):
+    income: float = Field(..., ge=0)
+    age: int = Field(..., ge=0)
+    bpl_card: bool = False
+    state: str = Field(..., min_length=2)
+
+
+class EligibilityResponse(BaseModel):
+    eligible: bool
+    reasons: list[str]
+    benefits: dict[str, str]
+    next_steps: list[str]
+    disclaimer: str = MEDICAL_DISCLAIMER
+
+
+class HospitalSuggestionRequest(BaseModel):
+    city: str = Field(..., min_length=2)
+
+
+class HospitalItem(BaseModel):
+    hospital_name: str
+    government: bool = True
+    scheme_supported: bool = True
+    contact_number: str
+
+
+class HospitalSuggestionResponse(BaseModel):
+    city: str
+    hospitals: list[HospitalItem]
+    disclaimer: str = MEDICAL_DISCLAIMER
 
 
 class SignupRequest(BaseModel):
@@ -51,32 +81,15 @@ class ProtectedResponse(BaseModel):
     user: UserResponse
 
 
-class HouseholdMember(BaseModel):
-    age: int = Field(..., ge=0)
-    gender: str = Field(..., min_length=1)
-
-
-class EligibilityRequest(BaseModel):
-    income: float = Field(..., ge=0)
-    age: int = Field(..., ge=0)
-    state: str = Field(..., min_length=2)
-    bpl_card: bool | None = None
-    household_type: str = Field(..., min_length=2)
-    household_members: list[HouseholdMember] | None = None
-    secc_no_adult_16_59: bool = False
-    secc_female_headed: bool = False
-    secc_disabled_no_caregiver: bool = False
-    session_id: str = "default-session"
-
-
-class EligibilityResponse(BaseModel):
-    eligible: bool
-    reasons: list[str]
-    benefits: dict[str, Any]
-
-
 class StatusResponse(BaseModel):
     session_id: str
     last_interaction: str
     logs: list[str]
     history: list[str]
+
+
+class InteractionLogResponse(BaseModel):
+    id: int
+    symptom_text: str
+    risk_level: str
+    created_at: datetime
