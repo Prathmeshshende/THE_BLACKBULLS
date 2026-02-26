@@ -5,8 +5,13 @@ class STTService:
         # - OpenAI Realtime API
         # - Google Cloud Speech-to-Text
         # Send `audio_bytes` to the provider and return the transcript text.
-        _ = audio_bytes
-        return "TRANSCRIPTION_PLACEHOLDER"
+        byte_count = len(audio_bytes)
+        if byte_count == 0:
+            return ""
+        return (
+            f"TRANSCRIPTION_PLACEHOLDER ({byte_count} bytes received). "
+            "If this repeats, browser speech recognition fallback will be used."
+        )
 
     async def transcribe_stream_chunk(self, audio_chunk: bytes) -> str:
         # TODO: Integrate streaming chunk transcription.

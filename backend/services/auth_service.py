@@ -22,16 +22,25 @@ ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", "
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 
-# Password hashing context using bcrypt.
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Password hashing context using bcrypt (primary per requirement).
+bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+# Fallback context for environments where bcrypt backend is unavailable/incompatible.
+fallback_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+    try:
+        return bcrypt_context.verify(plain_password, hashed_password)
+    except Exception:
+        return fallback_context.verify(plain_password, hashed_password)
 
 
 def get_password_hash(password: str) -> str:
-    return pwd_context.hash(password)
+    try:
+        return bcrypt_context.hash(password)
+    except Exception:
+        return fallback_context.hash(password)
 
 
 def create_access_token(subject: str, expires_minutes: int = ACCESS_TOKEN_EXPIRE_MINUTES) -> str:

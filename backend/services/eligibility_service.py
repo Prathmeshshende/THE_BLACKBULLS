@@ -1,56 +1,50 @@
-from models.schemas import HouseholdMember
+from models.schemas import EligibilityRequest, MEDICAL_DISCLAIMER
 
 
-def evaluate_income_eligibility(income: float) -> tuple[bool, str]:
-    """Income rule: eligible when annual income is <= 500000."""
-    if income <= 500000:
-        return True, "Eligible on income basis: annual income is within 500000 threshold"
-    return False, "Not eligible on income basis: annual income is above 500000 threshold"
-
-
-def evaluate_age_eligibility(age: int) -> tuple[bool, str]:
-    """Senior rule: age 70+ is eligible regardless of income."""
-    if age >= 70:
-        return True, "Eligible on age basis: senior coverage expansion for age 70+"
-    return False, "Not eligible on age basis: age is below 70"
-
-
-def evaluate_deprivation_criteria(
-    household_type: str,
-    household_members: list[HouseholdMember] | None = None,
-    no_adult_16_59: bool = False,
-    female_headed: bool = False,
-    disabled_no_caregiver: bool = False,
-) -> tuple[bool, str]:
+async def check_scheme_eligibility(data: EligibilityRequest) -> dict[str, object]:
     """
-    Deprivation rule:
-    - Eligible if no adult in 16-59 age group
-    - Eligible if female-headed household
-    - Eligible if disabled member has no caregiver
+    Rule-based eligibility (deterministic, no AI):
+    - income <= 500000 OR bpl_card OR age >= 70
     """
-    matched_criteria: list[str] = []
+    reasons: list[str] = []
 
-    if no_adult_16_59:
-        matched_criteria.append("No adult in 16-59 age group")
+    income_ok = data.income <= 500000
+    bpl_ok = bool(data.bpl_card)
+    senior_ok = data.age >= 70
 
-    if female_headed:
-        matched_criteria.append("Female-headed household")
+    if income_ok:
+        reasons.append("Eligible by income rule: income is within 500000 threshold.")
+    else:
+        reasons.append("Income rule not met: income is above 500000 threshold.")
 
-    if disabled_no_caregiver:
-        matched_criteria.append("Disabled member with no caregiver")
+    if bpl_ok:
+        reasons.append("Eligible by BPL rule: BPL card is available.")
+    else:
+        reasons.append("BPL rule not met: BPL card is not available.")
 
-    if household_members:
-        has_adult_16_59 = any(16 <= member.age <= 59 for member in household_members)
-        if not has_adult_16_59:
-            matched_criteria.append("No adult in 16-59 age group (derived from household members)")
+    if senior_ok:
+        reasons.append("Eligible by age rule: age is 70 or above.")
+    else:
+        reasons.append("Age rule not met: age is below 70.")
 
-    if matched_criteria:
-        return True, (
-            f"Eligible on SECC deprivation criteria for household type '{household_type}': "
-            + "; ".join(matched_criteria)
-        )
+    eligible = income_ok or bpl_ok or senior_ok
 
-    return False, (
-        f"Not eligible on SECC deprivation criteria for household type '{household_type}': "
-        "no qualifying deprivation condition matched"
-    )
+    benefits = {
+        "scheme_name": "Ayushman Bharat / PM-JAY",
+        "coverage": "₹5 lakh per family",
+        "state": data.state,
+    }
+
+    next_steps = [
+        "Carry ID proof and family details to the hospital helpdesk.",
+        "Request Ayushman Bharat / PM-JAY verification at registration.",
+        "Keep relevant documents ready (income/BPL/age proof as applicable).",
+    ]
+
+    return {
+        "eligible": eligible,
+        "reasons": reasons,
+        "benefits": benefits,
+        "next_steps": next_steps,
+        "disclaimer": MEDICAL_DISCLAIMER,
+    }

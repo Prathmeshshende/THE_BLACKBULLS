@@ -1,56 +1,31 @@
-from typing import Protocol
+from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from fastapi import APIRouter, Depends, Request
-
+from db.models import InteractionLog, User
+from db.session import get_db_session
 from models.schemas import TriageRequest, TriageResponse
-from services.ai_service import AIService
+from services.auth_service import get_current_user
+from services import triage_service
 
 router = APIRouter(tags=["triage"])
-
-# Database integration note:
-# Add `db: AsyncSession = Depends(get_db_session)` to this endpoint when you
-# want to persist triage requests/responses in PostgreSQL.
-#
-# Example:
-# from sqlalchemy.ext.asyncio import AsyncSession
-# from db.session import get_db_session
-#
-# async def classify_triage(..., db: AsyncSession = Depends(get_db_session)):
-#     # TODO: Insert a LogRecord or triage analytics row using SQLAlchemy.
-#     ...
-
-
-class DatabaseClient(Protocol):
-    async def log_event(self, session_id: str, message: str) -> None: ...
-
-
-def get_ai_service(request: Request) -> AIService:
-    return request.app.state.ai_service
-
-
-def get_db_client(request: Request) -> DatabaseClient:
-    return request.app.state.db_client
 
 
 @router.post("/triage", response_model=TriageResponse)
 async def classify_triage(
     data: TriageRequest,
-    ai_service: AIService = Depends(get_ai_service),
-    db_client: DatabaseClient = Depends(get_db_client),
+    db: AsyncSession = Depends(get_db_session),
+    current_user: User = Depends(get_current_user),
 ) -> TriageResponse:
-    # Step 1: Extract clinically relevant symptoms from free-form user text.
-    symptoms = await ai_service.extract_symptoms(data.symptom_text)
+    # Keep the route thin: business logic stays in services/triage_service.py.
+    result = await triage_service.analyze_symptoms(data.symptom_text)
 
-    # Step 2: Classify the case into Low/Medium/High risk.
-    risk_level = await ai_service.classify_risk(symptoms)
-
-    # Step 3: Generate safe guided response based on text + extracted symptoms + risk.
-    guidance = await ai_service.generate_guidance(data.symptom_text, symptoms, risk_level)
-
-    await db_client.log_event(
-        data.session_id,
-        f"Triage completed with risk level: {risk_level}; symptoms: {symptoms}",
+    interaction = InteractionLog(
+        user_id=current_user.id,
+        symptom_text=data.symptom_text,
+        risk_level=str(result["risk_level"]),
+        emergency_flag=bool(result["emergency_flag"]),
     )
+    db.add(interaction)
+    await db.commit()
 
-    # Structured JSON response for frontend/mobile apps.
-    return TriageResponse(risk_level=risk_level, guidance=guidance)
+    return TriageResponse(**result)

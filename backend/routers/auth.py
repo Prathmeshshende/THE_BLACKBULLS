@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.session import get_db_session
@@ -27,14 +28,19 @@ async def signup(data: SignupRequest, db: AsyncSession = Depends(get_db_session)
     if existing_user is not None:
         raise HTTPException(status_code=400, detail="Email is already registered")
 
-    user = await register_user(
-        db=db,
-        full_name=data.full_name,
-        email=data.email,
-        password=data.password,
-        phone=data.phone,
-        state=data.state,
-    )
+    try:
+        user = await register_user(
+            db=db,
+            full_name=data.full_name,
+            email=data.email,
+            password=data.password,
+            phone=data.phone,
+            state=data.state,
+        )
+    except IntegrityError as exc:
+        await db.rollback()
+        raise HTTPException(status_code=400, detail="User data conflicts with existing account") from exc
+
     return UserResponse(id=user.id, full_name=user.full_name, email=user.email)
 
 
