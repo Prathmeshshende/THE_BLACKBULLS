@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useRef, useState } from "react";
+import { transcribeVoice } from "@/lib/api";
 
 type SpeechRecognitionAlternativeLike = { transcript: string };
 type SpeechRecognitionResultLike = ArrayLike<SpeechRecognitionAlternativeLike> & { isFinal: boolean };
@@ -15,10 +16,22 @@ type SpeechRecognitionLike = {
 };
 type SpeechRecognitionConstructor = new () => SpeechRecognitionLike;
 
+type MediaRecorderLike = {
+  state: string;
+  ondataavailable: ((event: { data: Blob }) => void) | null;
+  onstop: (() => void) | null;
+  onerror: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+};
+
+type MediaRecorderConstructor = new (stream: MediaStream) => MediaRecorderLike;
+
 declare global {
   interface Window {
     SpeechRecognition?: SpeechRecognitionConstructor;
     webkitSpeechRecognition?: SpeechRecognitionConstructor;
+    MediaRecorder?: MediaRecorderConstructor;
   }
 }
 
@@ -26,6 +39,9 @@ type Props = { onTranscript: (transcript: string) => void; language?: "en" | "hi
 
 export default function VoiceRecorder({ onTranscript, language = "en" }: Props) {
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorderLike | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const mediaChunksRef = useRef<Blob[]>([]);
   const startTimeoutRef = useRef<number | null>(null);
   const finalTranscriptRef = useRef("");
   const liveTranscriptRef = useRef("");
@@ -36,13 +52,76 @@ export default function VoiceRecorder({ onTranscript, language = "en" }: Props) 
   const [micError, setMicError] = useState("");
 
   const labels = language === "hi"
-    ? { voiceInput: "वॉइस इनपुट", stop: "रोकें", startMic: "माइक शुरू करें", transcriptPlaceholder: "आपकी आवाज़ यहाँ दिखेगी…", webSpeechNotAvailable: "इस ब्राउज़र में Web Speech API उपलब्ध नहीं है।", micPermissionDenied: "माइक की अनुमति नहीं मिली।", noSpeechDetected: "आवाज़ स्पष्ट नहीं मिली।", audioCaptureIssue: "माइक्रोफोन से ऑडियो कैप्चर नहीं हो रहा।", micStartFailed: "माइक शुरू नहीं हो सका।", listeningIn: "सुनने की भाषा" }
-    : { voiceInput: "Voice Input", stop: "Stop", startMic: "Start Mic", transcriptPlaceholder: "Your speech will appear here…", webSpeechNotAvailable: "Web Speech API is not available in this browser.", micPermissionDenied: "Microphone permission denied.", noSpeechDetected: "No clear speech detected.", audioCaptureIssue: "Unable to capture microphone audio.", micStartFailed: "Could not start microphone.", listeningIn: "Listening in" };
+    ? {
+      voiceInput: "वॉइस इनपुट", stop: "रोकें", startMic: "माइक शुरू करें", transcriptPlaceholder: "आपकी आवाज़ यहाँ दिखेगी…", webSpeechNotAvailable: "इस ब्राउज़र में लाइव स्पीच डिटेक्शन उपलब्ध नहीं है। बैकएंड ट्रांसक्रिप्शन मोड इस्तेमाल होगा।", micPermissionDenied: "माइक की अनुमति नहीं मिली।", noSpeechDetected: "आवाज़ स्पष्ट नहीं मिली।", audioCaptureIssue: "माइक्रोफोन से ऑडियो कैप्चर नहीं हो रहा।", micStartFailed: "माइक शुरू नहीं हो सका।", listeningIn: "सुनने की भाषा", mediaRecorderNotAvailable: "इस ब्राउज़र में माइक्रोफोन रिकॉर्डिंग समर्थित नहीं है। Chrome या Edge में खोलें।", transcribeFailed: "रिकॉर्डेड ऑडियो को टेक्स्ट में बदलने में समस्या आई।"
+    }
+    : {
+      voiceInput: "Voice Input", stop: "Stop", startMic: "Start Mic", transcriptPlaceholder: "Your speech will appear here…", webSpeechNotAvailable: "Live speech detection is not available in this browser. Falling back to backend transcription mode.", micPermissionDenied: "Microphone permission denied.", noSpeechDetected: "No clear speech detected.", audioCaptureIssue: "Unable to capture microphone audio.", micStartFailed: "Could not start microphone.", listeningIn: "Listening in", mediaRecorderNotAvailable: "Microphone recording is not supported in this browser. Open in Chrome or Edge.", transcribeFailed: "Unable to transcribe recorded audio. Please try again."
+    };
+
+  const stopMediaStream = () => {
+    if (mediaStreamRef.current) {
+      mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+      mediaStreamRef.current = null;
+    }
+  };
+
+  const submitMediaRecording = async () => {
+    const blob = new Blob(mediaChunksRef.current, { type: "audio/webm" });
+    mediaChunksRef.current = [];
+    stopMediaStream();
+    if (!blob.size) {
+      setMicError(labels.noSpeechDetected);
+      return;
+    }
+
+    try {
+      const file = new File([blob], "mic-input.webm", { type: blob.type || "audio/webm" });
+      const response = await transcribeVoice(file);
+      const transcript = response.transcript?.trim() ?? "";
+      if (!transcript) {
+        setMicError(labels.noSpeechDetected);
+        return;
+      }
+      setLiveTranscript(transcript);
+      liveTranscriptRef.current = transcript;
+      if (transcript !== submittedTranscriptRef.current) {
+        submittedTranscriptRef.current = transcript;
+        onTranscript(transcript);
+      }
+    } catch {
+      setMicError(labels.transcribeFailed);
+    }
+  };
 
   const toggleRecording = async () => {
     const SpeechRecognitionImpl = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognitionImpl) { alert(labels.webSpeechNotAvailable); return; }
-    if (!recognitionRef.current) {
+    const MediaRecorderImpl = window.MediaRecorder;
+
+    if (recording) {
+      if (recognitionRef.current) {
+        const t = finalTranscriptRef.current.trim() || liveTranscriptRef.current.trim();
+        if (t && t !== submittedTranscriptRef.current) { submittedTranscriptRef.current = t; onTranscript(t); }
+        recognitionRef.current.stop(); setRecording(false); setStarting(false); return;
+      }
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+        mediaRecorderRef.current.stop();
+      }
+      setRecording(false);
+      setStarting(false);
+      return;
+    }
+
+    if (!SpeechRecognitionImpl && !MediaRecorderImpl) {
+      setMicError(labels.mediaRecorderNotAvailable);
+      return;
+    }
+
+    if (!SpeechRecognitionImpl) {
+      setMicError(labels.webSpeechNotAvailable);
+    }
+
+    if (SpeechRecognitionImpl && !recognitionRef.current) {
       const recognition = new SpeechRecognitionImpl();
       recognition.continuous = true; recognition.interimResults = true; recognition.maxAlternatives = 1;
       recognition.onresult = (event: SpeechRecognitionEventLike) => {
@@ -71,21 +150,62 @@ export default function VoiceRecorder({ onTranscript, language = "en" }: Props) 
       };
       recognitionRef.current = recognition;
     }
-    const recognition = recognitionRef.current;
-    recognition.lang = language === "hi" ? "hi-IN" : "en-IN";
-    if (recording) {
-      const t = finalTranscriptRef.current.trim() || liveTranscriptRef.current.trim();
-      if (t && t !== submittedTranscriptRef.current) { submittedTranscriptRef.current = t; onTranscript(t); }
-      recognition.stop(); setRecording(false); setStarting(false); return;
-    }
+
     if (starting) return;
-    try { const s = await navigator.mediaDevices.getUserMedia({ audio: true }); s.getTracks().forEach((t) => t.stop()); }
-    catch { setMicError(labels.micPermissionDenied); return; }
-    setMicError(""); finalTranscriptRef.current = ""; liveTranscriptRef.current = ""; submittedTranscriptRef.current = ""; setLiveTranscript(""); setStarting(true);
+
+    let stream: MediaStream;
     try {
-      recognition.start();
-      if (startTimeoutRef.current) clearTimeout(startTimeoutRef.current);
-      startTimeoutRef.current = window.setTimeout(() => { setStarting(false); setRecording(false); setMicError(labels.micStartFailed); }, 3500);
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    }
+    catch { setMicError(labels.micPermissionDenied); return; }
+
+    setMicError(""); finalTranscriptRef.current = ""; liveTranscriptRef.current = ""; submittedTranscriptRef.current = ""; setLiveTranscript(""); setStarting(true);
+
+    if (SpeechRecognitionImpl) {
+      stream.getTracks().forEach((track) => track.stop());
+      const recognition = recognitionRef.current;
+      if (!recognition) {
+        setRecording(false); setStarting(false); setMicError(labels.micStartFailed);
+        return;
+      }
+      recognition.lang = language === "hi" ? "hi-IN" : "en-IN";
+      try {
+        recognition.start();
+        if (startTimeoutRef.current) clearTimeout(startTimeoutRef.current);
+        startTimeoutRef.current = window.setTimeout(() => { setStarting(false); setRecording(false); setMicError(labels.micStartFailed); }, 3500);
+      } catch { setRecording(false); setStarting(false); setMicError(labels.micStartFailed); }
+      return;
+    }
+
+    if (!MediaRecorderImpl) {
+      stream.getTracks().forEach((track) => track.stop());
+      setStarting(false);
+      setMicError(labels.mediaRecorderNotAvailable);
+      return;
+    }
+
+    try {
+      mediaChunksRef.current = [];
+      mediaStreamRef.current = stream;
+      const mediaRecorder = new MediaRecorderImpl(stream);
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) {
+          mediaChunksRef.current.push(event.data);
+        }
+      };
+      mediaRecorder.onstop = () => {
+        void submitMediaRecording();
+      };
+      mediaRecorder.onerror = () => {
+        setMicError(labels.audioCaptureIssue);
+        stopMediaStream();
+        setRecording(false);
+        setStarting(false);
+      };
+      mediaRecorderRef.current = mediaRecorder;
+      mediaRecorder.start();
+      setStarting(false);
+      setRecording(true);
     } catch { setRecording(false); setStarting(false); setMicError(labels.micStartFailed); }
   };
 
