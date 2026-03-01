@@ -10,6 +10,9 @@ import { getAppLanguage, setAppLanguage } from "@/lib/language";
 
 type VoiceLanguage = "en" | "hi";
 
+const inputClass =
+  "glass-input";
+
 export default function EligibilityCheckerPage() {
   const router = useRouter();
   const [token, setToken] = useState("");
@@ -20,50 +23,22 @@ export default function EligibilityCheckerPage() {
   const [voiceError, setVoiceError] = useState("");
   const [voiceLanguage, setVoiceLanguage] = useState<VoiceLanguage>(() => getAppLanguage());
 
-  const primaryButtonClass =
-    "rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70 dark:focus-visible:ring-offset-slate-900";
-  const secondaryButtonClass =
-    "rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 dark:focus-visible:ring-offset-slate-900";
-
   useEffect(() => {
-    if (!isGoogleLoggedIn()) {
-      router.replace("/");
-      return;
-    }
-
+    if (!isGoogleLoggedIn()) { router.replace("/"); return; }
     if (!token) {
       void ensureBackendToken()
-        .then((resolvedToken) => {
-          setToken(resolvedToken);
-          setSubmitError("");
-        })
-        .catch(() => {
-          setSubmitError("Session setup failed. Please login again.");
-          router.replace("/");
-        });
+        .then((t) => { setToken(t); setSubmitError(""); })
+        .catch(() => { setSubmitError("Session setup failed. Please login again."); router.replace("/"); });
     }
-
-    return () => {
-      if ("speechSynthesis" in window) {
-        window.speechSynthesis.cancel();
-      }
-    };
+    return () => { if ("speechSynthesis" in window) window.speechSynthesis.cancel(); };
   }, [router, token]);
 
-  useEffect(() => {
-    setAppLanguage(voiceLanguage);
-  }, [voiceLanguage]);
+  useEffect(() => { setAppLanguage(voiceLanguage); }, [voiceLanguage]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!token) {
-      setSubmitError("Please login first.");
-      return;
-    }
-
-    setLoading(true);
-    setSubmitError("");
-
+    if (!token) { setSubmitError("Please login first."); return; }
+    setLoading(true); setSubmitError("");
     try {
       const form = new FormData(event.currentTarget);
       const payload = {
@@ -80,146 +55,175 @@ export default function EligibilityCheckerPage() {
         has_government_id: form.get("has_government_id") === "on",
         occupation: String(form.get("occupation") ?? "").trim() || undefined,
       };
-
       const result = await runEligibility(payload, token);
-      setEligibility(result);
-      setVoiceError("");
-    } catch {
-      setSubmitError("Failed to run eligibility check.");
-    } finally {
-      setLoading(false);
-    }
+      setEligibility(result); setVoiceError("");
+    } catch { setSubmitError("Failed to run eligibility check."); }
+    finally { setLoading(false); }
   };
 
-  const buildEligibilityVoiceText = (result: EligibilityResponse | null) => {
-    if (!result) {
-      return voiceLanguage === "hi"
-        ? "अभी पात्रता परिणाम उपलब्ध नहीं है। पहले पात्रता जांच चलाएं।"
-        : "No eligibility result yet. Please run the eligibility checker first.";
-    }
-
-    const eligibleSchemes = result.scheme_decisions
-      .filter((item) => item.eligible)
-      .map((item) => item.scheme_name);
-
-    const eligibilityLine = voiceLanguage === "hi"
-      ? (result.eligible ? "आप वर्तमान में पात्र हैं।" : "आप वर्तमान में पात्र नहीं हैं।")
-      : (result.eligible ? "You are currently eligible." : "You are currently not eligible.");
-    const schemesLine = voiceLanguage === "hi"
-      ? (eligibleSchemes.length ? `पात्र योजनाएं हैं: ${eligibleSchemes.join(", ")}।` : "अभी कोई योजना पात्र नहीं मिली।")
-      : (eligibleSchemes.length ? `Eligible schemes are ${eligibleSchemes.join(", ")}.` : "No scheme is currently marked as eligible.");
-
-    return `${eligibilityLine} ${result.assessment_summary} ${schemesLine}`;
+  const buildVoiceText = (result: EligibilityResponse | null) => {
+    if (!result) return voiceLanguage === "hi" ? "अभी पात्रता परिणाम उपलब्ध नहीं है।" : "No eligibility result yet.";
+    const eligible = result.eligible;
+    const schemes = result.scheme_decisions.filter((s) => s.eligible).map((s) => s.scheme_name);
+    if (voiceLanguage === "hi") return `${eligible ? "आप पात्र हैं।" : "आप अभी पात्र नहीं हैं।"} ${result.assessment_summary}`;
+    return `${eligible ? "You are eligible." : "You are not eligible."} ${result.assessment_summary} ${schemes.length ? `Schemes: ${schemes.join(", ")}.` : ""}`;
   };
 
-  const playEligibilityVoice = () => {
-    if (!("speechSynthesis" in window)) {
-      setVoiceError("Voice response is not supported in this browser.");
-      return;
-    }
-
+  const playVoice = () => {
+    if (!("speechSynthesis" in window)) { setVoiceError("Voice not supported."); return; }
     const synth = window.speechSynthesis;
-    const utterance = new SpeechSynthesisUtterance(buildEligibilityVoiceText(eligibility));
+    const utterance = new SpeechSynthesisUtterance(buildVoiceText(eligibility));
     const voices = synth.getVoices();
-    const preferredVoice =
-      voiceLanguage === "hi"
-        ? (voices.find((voice) => voice.lang.toLowerCase() === "hi-in") ?? voices.find((voice) => voice.lang.toLowerCase().startsWith("hi")))
-        : (voices.find((voice) => voice.lang.toLowerCase() === "en-in") ?? voices.find((voice) => voice.lang.toLowerCase().startsWith("en")));
-
-    if (preferredVoice) {
-      utterance.voice = preferredVoice;
-      utterance.lang = preferredVoice.lang;
-    } else {
-      utterance.lang = voiceLanguage === "hi" ? "hi-IN" : "en-US";
-    }
-
-    utterance.rate = 1;
-    utterance.pitch = 1;
-    utterance.volume = 1;
-
-    utterance.onstart = () => {
-      setIsSpeaking(true);
-      setVoiceError("");
-    };
-    utterance.onend = () => {
-      setIsSpeaking(false);
-    };
-    utterance.onerror = () => {
-      setIsSpeaking(false);
-      setVoiceError("Voice playback failed. Please try again.");
-    };
-
-    if (synth.speaking || synth.pending) {
-      synth.cancel();
-    }
-    synth.speak(utterance);
+    const voice = voiceLanguage === "hi"
+      ? voices.find((v) => v.lang.startsWith("hi")) : voices.find((v) => v.lang.startsWith("en"));
+    if (voice) { utterance.voice = voice; utterance.lang = voice.lang; }
+    utterance.onstart = () => setIsSpeaking(true);
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => { setIsSpeaking(false); setVoiceError("Voice playback failed."); };
+    synth.cancel(); synth.speak(utterance);
   };
 
-  const stopEligibilityVoice = () => {
-    if ("speechSynthesis" in window) {
-      window.speechSynthesis.cancel();
-    }
-    setIsSpeaking(false);
-  };
+  const checkboxFields = [
+    { name: "bpl_card", label: "BPL Card", defaultChecked: false },
+    { name: "has_government_id", label: "Has Government ID", defaultChecked: true },
+    { name: "rural_resident", label: "Rural Resident", defaultChecked: false },
+    { name: "has_chronic_illness", label: "Chronic Illness", defaultChecked: false },
+    { name: "has_disability", label: "Disability", defaultChecked: false },
+    { name: "is_pregnant", label: "Pregnant", defaultChecked: false },
+  ];
 
   return (
-    <main className="min-h-screen bg-slate-50 dark:bg-slate-950">
-      <Navbar language={voiceLanguage} onLanguageChange={(nextLanguage) => setVoiceLanguage(nextLanguage)} />
-      <section className="mx-auto max-w-4xl space-y-6 px-6 py-8">
-        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-soft dark:border-slate-800 dark:bg-slate-900">
-          <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Eligibility Checker</h1>
-          <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Run eligibility check with voice response in English or Hindi.</p>
-          <div className="mt-3 flex items-center gap-3">
-            <label className="text-sm font-semibold text-slate-700 dark:text-slate-200">Voice Language</label>
-            <select
-              value={voiceLanguage}
-              onChange={(event) => setVoiceLanguage(event.target.value as VoiceLanguage)}
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+    <main className="min-h-screen">
+      <Navbar language={voiceLanguage} onLanguageChange={(l) => setVoiceLanguage(l)} />
+      <section className="mx-auto max-w-4xl space-y-5 px-6 py-10">
+        {/* Header */}
+        <div
+          className="rounded-2xl p-6 animate-slide-up"
+          style={{
+            background: "linear-gradient(135deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.02) 100%)",
+            border: "1px solid rgba(167,139,250,0.20)",
+            backdropFilter: "blur(20px)",
+            boxShadow: "0 0 24px rgba(167,139,250,0.10), 0 8px 32px rgba(0,0,0,0.35)",
+          }}
+        >
+          <div className="flex items-center gap-2.5">
+            <span className="text-2xl">🎫</span>
+            <h1 className="text-xl font-extrabold text-white">Eligibility Checker</h1>
+          </div>
+          <p className="mt-1 text-sm text-slate-400">
+            Check your eligibility for government healthcare schemes with voice response.
+          </p>
+          {/* Language Toggle */}
+          <div className="mt-4 flex items-center gap-3">
+            <span className="text-xs font-semibold text-slate-400">Voice Language</span>
+            <div
+              className="flex overflow-hidden rounded-lg text-xs font-bold"
+              style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.10)" }}
             >
-              <option value="en">English</option>
-              <option value="hi">Hindi</option>
-            </select>
+              {(["en", "hi"] as VoiceLanguage[]).map((lang) => (
+                <button
+                  key={lang}
+                  type="button"
+                  onClick={() => setVoiceLanguage(lang)}
+                  className="px-3 py-1.5 transition-all"
+                  style={voiceLanguage === lang
+                    ? { background: "linear-gradient(135deg,#a78bfa,#38bdf8)", color: "#020817" }
+                    : { color: "#94a3b8" }}
+                >
+                  {lang === "en" ? "English" : "हिंदी"}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="rounded-xl border border-slate-200 bg-white p-4 shadow-soft dark:border-slate-800 dark:bg-slate-900">
-          <h2 className="text-base font-semibold">Eligibility Form</h2>
-          <div className="mt-3 grid gap-3">
-            <input name="income" type="number" required placeholder="Income" className="rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" />
-            <input name="age" type="number" required placeholder="Age" className="rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" />
-            <input name="state" required placeholder="State" className="rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" />
-            <input name="family_size" type="number" min={1} defaultValue={1} placeholder="Family size" className="rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" />
-            <input name="annual_hospital_visits" type="number" min={0} defaultValue={0} placeholder="Hospital visits per year" className="rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" />
-            <input name="occupation" placeholder="Occupation (optional)" className="rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" />
-
-            <label className="flex items-center gap-2 text-sm"><input name="bpl_card" type="checkbox" /> BPL Card</label>
-            <label className="flex items-center gap-2 text-sm"><input name="has_government_id" type="checkbox" defaultChecked /> Has Government ID</label>
-            <label className="flex items-center gap-2 text-sm"><input name="rural_resident" type="checkbox" /> Rural Resident</label>
-            <label className="flex items-center gap-2 text-sm"><input name="has_chronic_illness" type="checkbox" /> Chronic Illness</label>
-            <label className="flex items-center gap-2 text-sm"><input name="has_disability" type="checkbox" /> Disability</label>
-            <label className="flex items-center gap-2 text-sm"><input name="is_pregnant" type="checkbox" /> Pregnant</label>
-
-            <button disabled={loading} className={primaryButtonClass}>
-              {loading ? "Checking..." : "Check Eligibility"}
-            </button>
+        {/* Form */}
+        <form
+          onSubmit={handleSubmit}
+          className="rounded-2xl p-6"
+          style={{
+            background: "linear-gradient(135deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.02) 100%)",
+            border: "1px solid rgba(255,255,255,0.10)",
+            backdropFilter: "blur(20px)",
+            boxShadow: "0 8px 32px rgba(0,0,0,0.35)",
+          }}
+        >
+          <h2
+            className="mb-4 text-xs font-bold uppercase tracking-[0.18em]"
+            style={{ color: "rgba(167,139,250,0.7)" }}
+          >
+            Eligibility Form
+          </h2>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <input name="income" type="number" required placeholder="Annual Income (₹)" className={inputClass} />
+            <input name="age" type="number" required placeholder="Age" className={inputClass} />
+            <input name="state" required placeholder="State (e.g. Karnataka)" className={inputClass} />
+            <input name="family_size" type="number" min={1} defaultValue={1} placeholder="Family Size" className={inputClass} />
+            <input name="annual_hospital_visits" type="number" min={0} defaultValue={0} placeholder="Hospital Visits/Year" className={inputClass} />
+            <input name="occupation" placeholder="Occupation (optional)" className={inputClass} />
           </div>
-          {submitError ? <p className="mt-2 text-sm text-rose-600 dark:text-rose-400">{submitError}</p> : null}
+
+          {/* Checkboxes */}
+          <div className="mt-4 grid gap-2 sm:grid-cols-2 md:grid-cols-3">
+            {checkboxFields.map((f) => (
+              <label
+                key={f.name}
+                className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-300 transition-all hover:bg-white/5"
+                style={{ border: "1px solid rgba(255,255,255,0.08)" }}
+              >
+                <input
+                  name={f.name}
+                  type="checkbox"
+                  defaultChecked={f.defaultChecked}
+                  className="h-4 w-4 rounded accent-violet-400"
+                />
+                {f.label}
+              </label>
+            ))}
+          </div>
+
+          {submitError && <p className="mt-3 text-sm text-rose-400">{submitError}</p>}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="btn-neon mt-5 w-full"
+            style={{
+              background: "linear-gradient(135deg,#a78bfa,#38bdf8)",
+              boxShadow: "0 0 20px rgba(167,139,250,0.35)",
+            }}
+          >
+            {loading ? "Checking eligibility…" : "🎫 Check Eligibility Now"}
+          </button>
         </form>
 
-        <EligibilityCard data={eligibility} />
+        {/* Result */}
+        <EligibilityCard data={eligibility} language={voiceLanguage} />
 
-        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-soft dark:border-slate-800 dark:bg-slate-900">
-          <h3 className="text-base font-semibold">Eligibility Voice Response</h3>
-          <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{isSpeaking ? "Speaking..." : "Voice idle"}</p>
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <button type="button" onClick={playEligibilityVoice} className={primaryButtonClass}>
-              Play Eligibility Voice
+        {/* Voice Response */}
+        <div
+          className="rounded-2xl p-5"
+          style={{
+            background: "linear-gradient(135deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.02) 100%)",
+            border: "1px solid rgba(255,255,255,0.10)",
+            backdropFilter: "blur(20px)",
+          }}
+        >
+          <h3 className="mb-1 text-sm font-semibold text-white">🔊 Eligibility Voice Response</h3>
+          <p className="mb-3 text-xs text-slate-400">{isSpeaking ? "🔈 Speaking…" : "Voice idle"}</p>
+          <div className="flex gap-3">
+            <button type="button" onClick={playVoice} className="btn-neon" style={{ background: "linear-gradient(135deg,#a78bfa,#38bdf8)", boxShadow: "0 0 16px rgba(167,139,250,0.35)" }}>
+              ▶ Play Voice
             </button>
-            <button type="button" onClick={stopEligibilityVoice} className={secondaryButtonClass}>
-              Stop
+            <button
+              type="button"
+              onClick={() => { window.speechSynthesis?.cancel(); setIsSpeaking(false); }}
+              className="btn-ghost"
+            >
+              ⏹ Stop
             </button>
           </div>
-          {voiceError ? <p className="mt-2 text-sm text-rose-600 dark:text-rose-400">{voiceError}</p> : null}
+          {voiceError && <p className="mt-2 text-sm text-rose-400">{voiceError}</p>}
         </div>
       </section>
     </main>

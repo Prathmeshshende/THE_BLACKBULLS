@@ -63,196 +63,193 @@ export default function VoicePage() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const activeSpeechIdRef = useRef(0);
   const lastWhatsAppSummarySignatureRef = useRef("");
-  const primaryButtonClass =
-    "rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70 dark:focus-visible:ring-offset-slate-900";
-  const secondaryButtonClass =
-    "rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 dark:focus-visible:ring-offset-slate-900";
-  const voiceButtonClass =
-    "rounded-xl bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900";
+  const primaryButtonClass = "btn-neon";
+  const secondaryButtonClass = "btn-ghost";
+  const voiceButtonClass = "btn-neon";
 
   const texts = useMemo(
     () =>
       voiceLanguage === "hi"
         ? {
-            topLanguage: "भाषा",
-            authTitle: "ऑथ (ट्रायेज और पात्रता के लिए आवश्यक)",
-            emailPlaceholder: "ईमेल",
-            passwordPlaceholder: "पासवर्ड",
-            loginBtn: "लॉगिन",
-            loggingInBtn: "लॉगिन हो रहा है...",
-            tokenReady: "टोकन तैयार",
-            noToken: "अभी टोकन नहीं",
-            loginSuccess: "लॉगिन सफल।",
-            signupAndLoginSuccess: "नया अकाउंट बना और लॉगिन हो गया।",
-            loginFailed: "लॉगिन विफल। कृपया ईमेल/पासवर्ड जांचें या अलग ईमेल से कोशिश करें।",
-            loginFirstTriage: "सुरक्षित ट्रायेज endpoint के लिए पहले लॉगिन करें।",
-            loginFirstEligibility: "सुरक्षित पात्रता endpoint के लिए पहले लॉगिन करें।",
-            chatTitle: "असिस्टेंट से चैट",
-            chatTyping: "असिस्टेंट टाइप कर रहा है...",
-            chatInputPlaceholder: "यहाँ लक्षण लिखें (उदाहरण: 104 बुखार और सिरदर्द)",
-            sendBtn: "भेजें",
-            sendSymptomsBtn: "लक्षण भेजें",
-            chatLoginFirst: "कृपया पहले लॉगिन करें, फिर दोबारा लक्षण भेजें।",
-            riskPrefix: "जोखिम",
-            emergencyTag: "आपातकाल",
-            advisoryTitle: "परामर्श",
-            noTriage: "अभी कोई ट्रायेज परिणाम नहीं है।",
-            playVoice: "वॉइस चलाएं",
-            playAdvisoryVoice: "परामर्श वॉइस चलाएं",
-            stop: "रोकें",
-            enableAudio: "ऑडियो सक्षम करें",
-            autoVoice: "ऑटो वॉइस रिप्लाई",
-            voiceLanguage: "वॉइस भाषा",
-            speaking: "बोल रहा है...",
-            voiceIdle: "वॉइस निष्क्रिय",
-            emergencyBanner: "आपातकालीन चेतावनी: कृपया तुरंत चिकित्सा सहायता लें।",
-            eligibilityTitle: "पात्रता जांच",
-            incomePlaceholder: "आय",
-            agePlaceholder: "आयु",
-            statePlaceholder: "राज्य",
-            familySize: "परिवार का आकार",
-            visitsPerYear: "प्रति वर्ष अस्पताल विज़िट",
-            occupationOptional: "पेशा (वैकल्पिक)",
-            bplCard: "बीपीएल कार्ड",
-            hasGovId: "सरकारी आईडी है",
-            ruralResident: "ग्रामीण निवासी",
-            chronicIllness: "दीर्घकालिक बीमारी",
-            disability: "दिव्यांगता",
-            pregnant: "गर्भवती (यदि लागू हो)",
-            checkEligibility: "पात्रता जांचें",
-            checkEligibilityNow: "अभी पात्रता जांचें",
-            noEligibility: "अभी कोई पात्रता परिणाम नहीं है।",
-            eligibilityVoiceTitle: "पात्रता वॉइस उत्तर",
-            playEligibilityVoice: "पात्रता वॉइस चलाएं",
-            hospitalTitle: "अस्पताल सुझाव",
-            cityPlaceholder: "शहर",
-            findHospitals: "अस्पताल खोजें",
-            findNearbyHospitals: "नज़दीकी अस्पताल खोजें",
-            lastTranscript: "अंतिम ट्रांसक्रिप्ट:",
-            tapEnableAudio: "वॉइस चलाने के लिए एक बार ऑडियो सक्षम करें।",
-            audioPlaybackError: "ऑडियो चलाने में त्रुटि हुई। कृपया फिर से कोशिश करें।",
-            noAdvisory: "अभी कोई परामर्श उपलब्ध नहीं है।",
-            voiceUnsupported: "इस ब्राउज़र में वॉइस रिप्लाई समर्थित नहीं है।",
-            voicePlaybackFailed: "वॉइस प्लेबैक विफल हुआ। कृपया फिर से कोशिश करें या ब्राउज़र ऑडियो अनुमति जांचें।",
-            voicePlaybackBlocked: "ब्राउज़र ने वॉइस प्लेबैक रोक दिया। कृपया Play Voice बटन पर दोबारा टैप करें।",
-            voiceStartFailed: "इस ब्राउज़र में वॉइस प्लेबैक शुरू नहीं हो सका।",
-            hindiVoiceNotFound: "डिवाइस में हिंदी टेक्स्ट-टू-स्पीच वॉइस नहीं मिली। Windows Settings > Time & language > Speech में Hindi voice pack इंस्टॉल करें।",
-            hindiVoiceFallback: "हिंदी वॉइस उपलब्ध नहीं है, इसलिए फिलहाल English वॉइस में आउटपुट चलाया जा रहा है।",
-            englishOption: "अंग्रेज़ी",
-            hindiOption: "हिंदी",
-            medicalDisclaimer: "यह चिकित्सीय निदान नहीं है। कृपया लाइसेंसधारी चिकित्सा विशेषज्ञ से परामर्श करें।",
-            whatsappTitle: "व्हाट्सऐप सारांश (वैकल्पिक)",
-            whatsappAuto: "कॉल के बाद ऑटो-समरी भेजें (वैकल्पिक)",
-            whatsappPhonePlaceholder: "व्हाट्सऐप नंबर (उदा. +919876543210)",
-            whatsappCityPlaceholder: "अस्पताल शहर",
-            whatsappSent: "व्हाट्सऐप सारांश भेज दिया गया।",
-            whatsappSendFailed: "व्हाट्सऐप सारांश भेजने में समस्या आई।",
-            whatsappNeedPhone: "ऑटो-समरी के लिए व्हाट्सऐप नंबर दर्ज करें।",
-            whatsappSendNow: "अभी भेजें",
-            whatsappSending: "व्हाट्सऐप सारांश भेजा जा रहा है...",
-            whatsappNeedTriage: "पहले लक्षण भेजें ताकि सारांश बन सके।",
-            whatsappLoginExpired: "सेशन समाप्त हो गया है। कृपया दोबारा लॉगिन करें।",
-            whatsappBackendRestart: "बैकएंड अपडेट हुआ है। कृपया बैकएंड रीस्टार्ट करें और फिर कोशिश करें।",
-            whatsappMockNotice: "यह डेमो (mock) भेजा गया है। असली WhatsApp संदेश के लिए Twilio कॉन्फ़िगर करें।",
-            whatsappDeliveryFailed: "WhatsApp डिलीवरी विफल हुई।",
-            whatsappProviderNotConfigured: "Twilio कॉन्फ़िगर नहीं है। .env में TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN और TWILIO_WHATSAPP_FROM सेट करें, फिर backend रीस्टार्ट करें।",
-            whatsappInvalidPhone: "फोन नंबर मान्य नहीं है। देश कोड सहित नंबर डालें (उदा: +919699526226)।",
-            whatsappTwilioFailed: "Twilio से संदेश भेजने में समस्या आई। कृपया Twilio sandbox/approved number जांचें।",
-            whatsappNormalFallback: "Twilio उपलब्ध नहीं है, इसलिए सारांश सामान्य संदेश मोड में भेजा गया है।",
-            smsSent: "SMS सफलतापूर्वक भेजा गया।",
-            whatsappDeliveryPending: "व्हाट्सऐप संदेश कतार में है। अंतिम डिलीवरी स्थिति जांची जा रही है...",
-            cloudTtsFailed: "क्लाउड हिंदी वॉइस उपलब्ध नहीं हो सकी। कृपया नेटवर्क जांचें या दोबारा कोशिश करें।",
-          }
+          topLanguage: "भाषा",
+          authTitle: "ऑथ (ट्रायेज और पात्रता के लिए आवश्यक)",
+          emailPlaceholder: "ईमेल",
+          passwordPlaceholder: "पासवर्ड",
+          loginBtn: "लॉगिन",
+          loggingInBtn: "लॉगिन हो रहा है...",
+          tokenReady: "टोकन तैयार",
+          noToken: "अभी टोकन नहीं",
+          loginSuccess: "लॉगिन सफल।",
+          signupAndLoginSuccess: "नया अकाउंट बना और लॉगिन हो गया।",
+          loginFailed: "लॉगिन विफल। कृपया ईमेल/पासवर्ड जांचें या अलग ईमेल से कोशिश करें।",
+          loginFirstTriage: "सुरक्षित ट्रायेज endpoint के लिए पहले लॉगिन करें।",
+          loginFirstEligibility: "सुरक्षित पात्रता endpoint के लिए पहले लॉगिन करें।",
+          chatTitle: "असिस्टेंट से चैट",
+          chatTyping: "असिस्टेंट टाइप कर रहा है...",
+          chatInputPlaceholder: "यहाँ लक्षण लिखें (उदाहरण: 104 बुखार और सिरदर्द)",
+          sendBtn: "भेजें",
+          sendSymptomsBtn: "लक्षण भेजें",
+          chatLoginFirst: "कृपया पहले लॉगिन करें, फिर दोबारा लक्षण भेजें।",
+          riskPrefix: "जोखिम",
+          emergencyTag: "आपातकाल",
+          advisoryTitle: "परामर्श",
+          noTriage: "अभी कोई ट्रायेज परिणाम नहीं है।",
+          playVoice: "वॉइस चलाएं",
+          playAdvisoryVoice: "परामर्श वॉइस चलाएं",
+          stop: "रोकें",
+          enableAudio: "ऑडियो सक्षम करें",
+          autoVoice: "ऑटो वॉइस रिप्लाई",
+          voiceLanguage: "वॉइस भाषा",
+          speaking: "बोल रहा है...",
+          voiceIdle: "वॉइस निष्क्रिय",
+          emergencyBanner: "आपातकालीन चेतावनी: कृपया तुरंत चिकित्सा सहायता लें।",
+          eligibilityTitle: "पात्रता जांच",
+          incomePlaceholder: "आय",
+          agePlaceholder: "आयु",
+          statePlaceholder: "राज्य",
+          familySize: "परिवार का आकार",
+          visitsPerYear: "प्रति वर्ष अस्पताल विज़िट",
+          occupationOptional: "पेशा (वैकल्पिक)",
+          bplCard: "बीपीएल कार्ड",
+          hasGovId: "सरकारी आईडी है",
+          ruralResident: "ग्रामीण निवासी",
+          chronicIllness: "दीर्घकालिक बीमारी",
+          disability: "दिव्यांगता",
+          pregnant: "गर्भवती (यदि लागू हो)",
+          checkEligibility: "पात्रता जांचें",
+          checkEligibilityNow: "अभी पात्रता जांचें",
+          noEligibility: "अभी कोई पात्रता परिणाम नहीं है।",
+          eligibilityVoiceTitle: "पात्रता वॉइस उत्तर",
+          playEligibilityVoice: "पात्रता वॉइस चलाएं",
+          hospitalTitle: "अस्पताल सुझाव",
+          cityPlaceholder: "शहर",
+          findHospitals: "अस्पताल खोजें",
+          findNearbyHospitals: "नज़दीकी अस्पताल खोजें",
+          lastTranscript: "अंतिम ट्रांसक्रिप्ट:",
+          tapEnableAudio: "वॉइस चलाने के लिए एक बार ऑडियो सक्षम करें।",
+          audioPlaybackError: "ऑडियो चलाने में त्रुटि हुई। कृपया फिर से कोशिश करें।",
+          noAdvisory: "अभी कोई परामर्श उपलब्ध नहीं है।",
+          voiceUnsupported: "इस ब्राउज़र में वॉइस रिप्लाई समर्थित नहीं है।",
+          voicePlaybackFailed: "वॉइस प्लेबैक विफल हुआ। कृपया फिर से कोशिश करें या ब्राउज़र ऑडियो अनुमति जांचें।",
+          voicePlaybackBlocked: "ब्राउज़र ने वॉइस प्लेबैक रोक दिया। कृपया Play Voice बटन पर दोबारा टैप करें।",
+          voiceStartFailed: "इस ब्राउज़र में वॉइस प्लेबैक शुरू नहीं हो सका।",
+          hindiVoiceNotFound: "डिवाइस में हिंदी टेक्स्ट-टू-स्पीच वॉइस नहीं मिली। Windows Settings > Time & language > Speech में Hindi voice pack इंस्टॉल करें।",
+          hindiVoiceFallback: "हिंदी वॉइस उपलब्ध नहीं है, इसलिए फिलहाल English वॉइस में आउटपुट चलाया जा रहा है।",
+          englishOption: "अंग्रेज़ी",
+          hindiOption: "हिंदी",
+          medicalDisclaimer: "यह चिकित्सीय निदान नहीं है। कृपया लाइसेंसधारी चिकित्सा विशेषज्ञ से परामर्श करें।",
+          whatsappTitle: "व्हाट्सऐप सारांश (वैकल्पिक)",
+          whatsappAuto: "कॉल के बाद ऑटो-समरी भेजें (वैकल्पिक)",
+          whatsappPhonePlaceholder: "व्हाट्सऐप नंबर (उदा. +919876543210)",
+          whatsappCityPlaceholder: "अस्पताल शहर",
+          whatsappSent: "व्हाट्सऐप सारांश भेज दिया गया।",
+          whatsappSendFailed: "व्हाट्सऐप सारांश भेजने में समस्या आई।",
+          whatsappNeedPhone: "ऑटो-समरी के लिए व्हाट्सऐप नंबर दर्ज करें।",
+          whatsappSendNow: "अभी भेजें",
+          whatsappSending: "व्हाट्सऐप सारांश भेजा जा रहा है...",
+          whatsappNeedTriage: "पहले लक्षण भेजें ताकि सारांश बन सके।",
+          whatsappLoginExpired: "सेशन समाप्त हो गया है। कृपया दोबारा लॉगिन करें।",
+          whatsappBackendRestart: "बैकएंड अपडेट हुआ है। कृपया बैकएंड रीस्टार्ट करें और फिर कोशिश करें।",
+          whatsappMockNotice: "यह डेमो (mock) भेजा गया है। असली WhatsApp संदेश के लिए Twilio कॉन्फ़िगर करें।",
+          whatsappDeliveryFailed: "WhatsApp डिलीवरी विफल हुई।",
+          whatsappProviderNotConfigured: "Twilio कॉन्फ़िगर नहीं है। .env में TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN और TWILIO_WHATSAPP_FROM सेट करें, फिर backend रीस्टार्ट करें।",
+          whatsappInvalidPhone: "फोन नंबर मान्य नहीं है। देश कोड सहित नंबर डालें (उदा: +919699526226)।",
+          whatsappTwilioFailed: "Twilio से संदेश भेजने में समस्या आई। कृपया Twilio sandbox/approved number जांचें।",
+          whatsappNormalFallback: "Twilio उपलब्ध नहीं है, इसलिए सारांश सामान्य संदेश मोड में भेजा गया है।",
+          smsSent: "SMS सफलतापूर्वक भेजा गया।",
+          whatsappDeliveryPending: "व्हाट्सऐप संदेश कतार में है। अंतिम डिलीवरी स्थिति जांची जा रही है...",
+          cloudTtsFailed: "क्लाउड हिंदी वॉइस उपलब्ध नहीं हो सकी। कृपया नेटवर्क जांचें या दोबारा कोशिश करें।",
+        }
         : {
-            topLanguage: "Language",
-            authTitle: "Auth (Required for Triage & Eligibility)",
-            emailPlaceholder: "Email",
-            passwordPlaceholder: "Password",
-            loginBtn: "Login",
-            loggingInBtn: "Logging in...",
-            tokenReady: "Token ready",
-            noToken: "No token yet",
-            loginSuccess: "Login successful.",
-            signupAndLoginSuccess: "New account created and logged in.",
-            loginFailed: "Login failed. Please check email/password or try a different email.",
-            loginFirstTriage: "Please login first to access protected triage endpoint.",
-            loginFirstEligibility: "Please login first to access protected eligibility endpoint.",
-            chatTitle: "Chat with Assistant",
-            chatTyping: "Assistant is typing...",
-            chatInputPlaceholder: "Type symptoms here (example: 104 fever with headache)",
-            sendBtn: "Send",
-            sendSymptomsBtn: "Send Symptoms",
-            chatLoginFirst: "Please login first, then send symptoms again.",
-            riskPrefix: "Risk",
-            emergencyTag: "Emergency",
-            advisoryTitle: "Advisory",
-            noTriage: "No triage result yet.",
-            playVoice: "Play Voice Reply",
-            playAdvisoryVoice: "Play Advisory Voice",
-            stop: "Stop",
-            enableAudio: "Enable Audio",
-            autoVoice: "Auto Voice Reply",
-            voiceLanguage: "Voice Language",
-            speaking: "Speaking...",
-            voiceIdle: "Voice idle",
-            emergencyBanner: "Emergency alert: please seek immediate care.",
-            eligibilityTitle: "Eligibility Checker",
-            incomePlaceholder: "Income",
-            agePlaceholder: "Age",
-            statePlaceholder: "State",
-            familySize: "Family Size",
-            visitsPerYear: "Hospital Visits per Year",
-            occupationOptional: "Occupation (optional)",
-            bplCard: "BPL Card",
-            hasGovId: "Has Government ID",
-            ruralResident: "Rural Resident",
-            chronicIllness: "Chronic Illness",
-            disability: "Disability",
-            pregnant: "Pregnant (if applicable)",
-            checkEligibility: "Check Eligibility",
-            checkEligibilityNow: "Check Eligibility Now",
-            noEligibility: "No eligibility result yet.",
-            eligibilityVoiceTitle: "Eligibility Voice Response",
-            playEligibilityVoice: "Play Eligibility Voice",
-            hospitalTitle: "Hospital Suggestion",
-            cityPlaceholder: "City",
-            findHospitals: "Find Hospitals",
-            findNearbyHospitals: "Find Nearby Hospitals",
-            lastTranscript: "Last transcript:",
-            tapEnableAudio: "Tap Enable Audio once to allow voice playback.",
-            audioPlaybackError: "Audio playback error. Please try again.",
-            noAdvisory: "No advisory available yet.",
-            voiceUnsupported: "Voice reply is not supported in this browser.",
-            voicePlaybackFailed: "Voice playback failed. Try again or check browser audio permissions.",
-            voicePlaybackBlocked: "Browser blocked voice playback. Please tap Play Voice again.",
-            voiceStartFailed: "Unable to start voice playback in this browser.",
-            hindiVoiceNotFound: "Hindi text-to-speech voice is not available on this device. Install Hindi voice pack from Windows Settings > Time & language > Speech.",
-            hindiVoiceFallback: "Hindi voice is unavailable, so output is currently playing with an English voice fallback.",
-            englishOption: "English",
-            hindiOption: "Hindi",
-            medicalDisclaimer: "This is not a medical diagnosis. Please consult a licensed medical professional.",
-            whatsappTitle: "WhatsApp Summary (Optional)",
-            whatsappAuto: "Auto-send summary after conversation (optional)",
-            whatsappPhonePlaceholder: "WhatsApp number (e.g. +919876543210)",
-            whatsappCityPlaceholder: "Hospital city",
-            whatsappSent: "WhatsApp summary sent successfully.",
-            whatsappSendFailed: "Failed to send WhatsApp summary.",
-            whatsappNeedPhone: "Enter a WhatsApp number to enable auto summary.",
-            whatsappSendNow: "Send now",
-            whatsappSending: "Sending WhatsApp summary...",
-            whatsappNeedTriage: "Send symptoms first to generate a summary.",
-            whatsappLoginExpired: "Session expired. Please login again.",
-            whatsappBackendRestart: "Backend was updated. Restart backend and try again.",
-            whatsappMockNotice: "This is a mock send only. Configure Twilio for real WhatsApp delivery.",
-            whatsappDeliveryFailed: "WhatsApp delivery failed.",
-            whatsappProviderNotConfigured: "Twilio is not configured. Set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_WHATSAPP_FROM in .env, then restart backend.",
-            whatsappInvalidPhone: "Invalid phone number. Enter number with country code (e.g. +919699526226).",
-            whatsappTwilioFailed: "Twilio failed to send the message. Check Twilio sandbox/approved recipient setup.",
-            whatsappNormalFallback: "Twilio is unavailable, so the summary was sent in normal-message fallback mode.",
-            smsSent: "SMS sent successfully.",
-            whatsappDeliveryPending: "WhatsApp message is queued. Checking final delivery status...",
-            cloudTtsFailed: "Cloud voice generation failed. Please check your network and try again.",
-          },
+          topLanguage: "Language",
+          authTitle: "Auth (Required for Triage & Eligibility)",
+          emailPlaceholder: "Email",
+          passwordPlaceholder: "Password",
+          loginBtn: "Login",
+          loggingInBtn: "Logging in...",
+          tokenReady: "Token ready",
+          noToken: "No token yet",
+          loginSuccess: "Login successful.",
+          signupAndLoginSuccess: "New account created and logged in.",
+          loginFailed: "Login failed. Please check email/password or try a different email.",
+          loginFirstTriage: "Please login first to access protected triage endpoint.",
+          loginFirstEligibility: "Please login first to access protected eligibility endpoint.",
+          chatTitle: "Chat with Assistant",
+          chatTyping: "Assistant is typing...",
+          chatInputPlaceholder: "Type symptoms here (example: 104 fever with headache)",
+          sendBtn: "Send",
+          sendSymptomsBtn: "Send Symptoms",
+          chatLoginFirst: "Please login first, then send symptoms again.",
+          riskPrefix: "Risk",
+          emergencyTag: "Emergency",
+          advisoryTitle: "Advisory",
+          noTriage: "No triage result yet.",
+          playVoice: "Play Voice Reply",
+          playAdvisoryVoice: "Play Advisory Voice",
+          stop: "Stop",
+          enableAudio: "Enable Audio",
+          autoVoice: "Auto Voice Reply",
+          voiceLanguage: "Voice Language",
+          speaking: "Speaking...",
+          voiceIdle: "Voice idle",
+          emergencyBanner: "Emergency alert: please seek immediate care.",
+          eligibilityTitle: "Eligibility Checker",
+          incomePlaceholder: "Income",
+          agePlaceholder: "Age",
+          statePlaceholder: "State",
+          familySize: "Family Size",
+          visitsPerYear: "Hospital Visits per Year",
+          occupationOptional: "Occupation (optional)",
+          bplCard: "BPL Card",
+          hasGovId: "Has Government ID",
+          ruralResident: "Rural Resident",
+          chronicIllness: "Chronic Illness",
+          disability: "Disability",
+          pregnant: "Pregnant (if applicable)",
+          checkEligibility: "Check Eligibility",
+          checkEligibilityNow: "Check Eligibility Now",
+          noEligibility: "No eligibility result yet.",
+          eligibilityVoiceTitle: "Eligibility Voice Response",
+          playEligibilityVoice: "Play Eligibility Voice",
+          hospitalTitle: "Hospital Suggestion",
+          cityPlaceholder: "City",
+          findHospitals: "Find Hospitals",
+          findNearbyHospitals: "Find Nearby Hospitals",
+          lastTranscript: "Last transcript:",
+          tapEnableAudio: "Tap Enable Audio once to allow voice playback.",
+          audioPlaybackError: "Audio playback error. Please try again.",
+          noAdvisory: "No advisory available yet.",
+          voiceUnsupported: "Voice reply is not supported in this browser.",
+          voicePlaybackFailed: "Voice playback failed. Try again or check browser audio permissions.",
+          voicePlaybackBlocked: "Browser blocked voice playback. Please tap Play Voice again.",
+          voiceStartFailed: "Unable to start voice playback in this browser.",
+          hindiVoiceNotFound: "Hindi text-to-speech voice is not available on this device. Install Hindi voice pack from Windows Settings > Time & language > Speech.",
+          hindiVoiceFallback: "Hindi voice is unavailable, so output is currently playing with an English voice fallback.",
+          englishOption: "English",
+          hindiOption: "Hindi",
+          medicalDisclaimer: "This is not a medical diagnosis. Please consult a licensed medical professional.",
+          whatsappTitle: "WhatsApp Summary (Optional)",
+          whatsappAuto: "Auto-send summary after conversation (optional)",
+          whatsappPhonePlaceholder: "WhatsApp number (e.g. +919876543210)",
+          whatsappCityPlaceholder: "Hospital city",
+          whatsappSent: "WhatsApp summary sent successfully.",
+          whatsappSendFailed: "Failed to send WhatsApp summary.",
+          whatsappNeedPhone: "Enter a WhatsApp number to enable auto summary.",
+          whatsappSendNow: "Send now",
+          whatsappSending: "Sending WhatsApp summary...",
+          whatsappNeedTriage: "Send symptoms first to generate a summary.",
+          whatsappLoginExpired: "Session expired. Please login again.",
+          whatsappBackendRestart: "Backend was updated. Restart backend and try again.",
+          whatsappMockNotice: "This is a mock send only. Configure Twilio for real WhatsApp delivery.",
+          whatsappDeliveryFailed: "WhatsApp delivery failed.",
+          whatsappProviderNotConfigured: "Twilio is not configured. Set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_WHATSAPP_FROM in .env, then restart backend.",
+          whatsappInvalidPhone: "Invalid phone number. Enter number with country code (e.g. +919699526226).",
+          whatsappTwilioFailed: "Twilio failed to send the message. Check Twilio sandbox/approved recipient setup.",
+          whatsappNormalFallback: "Twilio is unavailable, so the summary was sent in normal-message fallback mode.",
+          smsSent: "SMS sent successfully.",
+          whatsappDeliveryPending: "WhatsApp message is queued. Checking final delivery status...",
+          cloudTtsFailed: "Cloud voice generation failed. Please check your network and try again.",
+        },
     [voiceLanguage],
   );
 
@@ -976,153 +973,160 @@ export default function VoicePage() {
       ? texts.medicalDisclaimer
       : (triage?.disclaimer ?? texts.medicalDisclaimer);
 
+  const glassCard = {
+    background: "linear-gradient(135deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.02) 100%)",
+    border: "1px solid rgba(255,255,255,0.10)",
+    backdropFilter: "blur(20px)" as const,
+    boxShadow: "0 8px 32px rgba(0,0,0,0.35)",
+  };
+
   return (
-    <main className="min-h-screen bg-slate-50 dark:bg-slate-950">
+    <main className="min-h-screen">
       <Navbar language={voiceLanguage} onLanguageChange={(nextLanguage) => setVoiceLanguage(nextLanguage)} />
-      <section className="mx-auto max-w-6xl space-y-6 px-6 py-8">
-        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-soft dark:border-slate-800 dark:bg-slate-900">
-          <div className="flex flex-wrap items-center gap-3">
-            <label className="text-sm font-semibold text-slate-700 dark:text-slate-200">{texts.topLanguage}</label>
-            <select
-              value={voiceLanguage}
-              onChange={(event) => setVoiceLanguage(event.target.value as VoiceLanguage)}
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
-            >
-              <option value="en">{texts.englishOption}</option>
-              <option value="hi">{texts.hindiOption}</option>
-            </select>
+      <section className="mx-auto max-w-6xl space-y-5 px-6 py-8">
+
+        {/* Language Bar */}
+        <div className="flex flex-wrap items-center gap-3 rounded-2xl p-4" style={glassCard}>
+          <span className="text-xs font-bold uppercase tracking-[0.18em]" style={{ color: "rgba(0,229,160,0.7)" }}>
+            {texts.topLanguage}
+          </span>
+          <div className="flex overflow-hidden rounded-lg text-xs font-bold" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.10)" }}>
+            {(["en", "hi"] as VoiceLanguage[]).map((lang) => (
+              <button
+                key={lang}
+                type="button"
+                onClick={() => setVoiceLanguage(lang)}
+                className="px-3 py-1.5 transition-all"
+                style={voiceLanguage === lang
+                  ? { background: "linear-gradient(135deg,#00e5a0,#38bdf8)", color: "#020817" }
+                  : { color: "#94a3b8" }}
+              >
+                {lang === "en" ? texts.englishOption : texts.hindiOption}
+              </button>
+            ))}
           </div>
         </div>
 
         <VoiceRecorder onTranscript={handleTriage} language={voiceLanguage} />
 
-        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-soft dark:border-slate-800 dark:bg-slate-900">
-          <h3 className="text-base font-semibold">{texts.whatsappTitle}</h3>
-          <div className="mt-3 grid gap-3 md:grid-cols-4">
-            <input
-              value={whatsAppPhone}
-              onChange={(event) => {
-                setWhatsAppPhone(event.target.value);
-                setWhatsAppError("");
-              }}
-              placeholder={texts.whatsappPhonePlaceholder}
-              className="rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-800"
-            />
-            <input
-              value={whatsAppCity}
-              onChange={(event) => setWhatsAppCity(event.target.value)}
-              placeholder={texts.whatsappCityPlaceholder}
-              className="rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-800"
-            />
-            <label className="flex items-center gap-2 self-center text-sm text-slate-700 dark:text-slate-300">
-              <input
-                type="checkbox"
-                checked={whatsAppAutoSummary}
-                onChange={(event) => {
-                  setWhatsAppAutoSummary(event.target.checked);
-                  setWhatsAppError("");
-                }}
-              />
+        {/* WhatsApp Panel */}
+        <div className="rounded-2xl p-5" style={{ ...glassCard, border: "1px solid rgba(37,211,102,0.20)" }}>
+          <div className="mb-3 flex items-center gap-2">
+            <span className="text-lg">💬</span>
+            <h3 className="text-xs font-bold uppercase tracking-[0.18em]" style={{ color: "rgba(37,211,102,0.8)" }}>
+              {texts.whatsappTitle}
+            </h3>
+          </div>
+          <div className="grid gap-3 md:grid-cols-4">
+            <input value={whatsAppPhone} onChange={(e) => { setWhatsAppPhone(e.target.value); setWhatsAppError(""); }} placeholder={texts.whatsappPhonePlaceholder} className="glass-input" />
+            <input value={whatsAppCity} onChange={(e) => setWhatsAppCity(e.target.value)} placeholder={texts.whatsappCityPlaceholder} className="glass-input" />
+            <label className="flex cursor-pointer items-center gap-2 self-center rounded-xl px-3 py-2.5 text-sm text-slate-300" style={{ border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)" }}>
+              <input type="checkbox" checked={whatsAppAutoSummary} onChange={(e) => { setWhatsAppAutoSummary(e.target.checked); setWhatsAppError(""); }} className="accent-emerald-400" />
               {texts.whatsappAuto}
             </label>
-            <button
-              type="button"
-              onClick={() => {
-                void sendWhatsAppSummaryNow();
-              }}
-              disabled={whatsAppSending}
-              className={primaryButtonClass}
-            >
+            <button type="button" onClick={() => { void sendWhatsAppSummaryNow(); }} disabled={whatsAppSending} className="btn-neon">
               {texts.whatsappSendNow}
             </button>
           </div>
-          {whatsAppSending ? <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{texts.whatsappSending}</p> : null}
-          {whatsAppStatus ? <p className="mt-2 text-sm text-emerald-600 dark:text-emerald-400">{whatsAppStatus}</p> : null}
-          {whatsAppError ? <p className="mt-2 text-sm text-rose-600 dark:text-rose-400">{whatsAppError}</p> : null}
+          {whatsAppSending && <p className="mt-2 text-sm text-slate-400">{texts.whatsappSending}</p>}
+          {whatsAppStatus && <p className="mt-2 text-sm" style={{ color: "#00e5a0" }}>{whatsAppStatus}</p>}
+          {whatsAppError && <p className="mt-2 text-sm text-rose-400">{whatsAppError}</p>}
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-soft dark:border-slate-800 dark:bg-slate-900">
-          <h3 className="text-base font-semibold">{texts.chatTitle}</h3>
-          <div className="mt-3 max-h-64 space-y-2 overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/40">
+        {/* Chat */}
+        <div className="rounded-2xl p-5" style={glassCard}>
+          <h3 className="mb-3 text-xs font-bold uppercase tracking-[0.18em]" style={{ color: "rgba(167,139,250,0.7)" }}>
+            💬 {texts.chatTitle}
+          </h3>
+          <div
+            className="max-h-72 space-y-2 overflow-y-auto rounded-xl p-3"
+            style={{ background: "rgba(0,0,0,0.25)", border: "1px solid rgba(255,255,255,0.06)" }}
+          >
             {chatMessages.map((message, index) => (
               <div
                 key={`${message.role}-${index}`}
-                className={`max-w-[90%] whitespace-pre-wrap rounded-lg px-3 py-2 text-sm ${
+                className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${message.role === "user" ? "ml-auto" : ""
+                  }`}
+                style={
                   message.role === "user"
-                    ? "ml-auto bg-emerald-600 text-white"
-                    : "bg-white text-slate-700 dark:bg-slate-900 dark:text-slate-200"
-                }`}
+                    ? { background: "linear-gradient(135deg,#00e5a0,#38bdf8)", color: "#020817", fontWeight: 600 }
+                    : { background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.10)", color: "#cbd5e1" }
+                }
               >
                 {message.text}
               </div>
             ))}
-            {chatLoading ? <p className="text-xs text-slate-500">{texts.chatTyping}</p> : null}
+            {chatLoading && (
+              <div className="flex items-center gap-2 text-xs text-slate-500">
+                <div className="flex gap-1">
+                  {[1, 2, 3].map((i) => <div key={i} className="h-1.5 w-1.5 rounded-full bg-slate-500" style={{ animation: `waveform 0.9s ease-in-out ${(i - 1) * 0.2}s infinite` }} />)}
+                </div>
+                {texts.chatTyping}
+              </div>
+            )}
           </div>
           <div className="mt-3 flex gap-2">
             <input
               value={chatInput}
-              onChange={(event) => setChatInput(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  event.preventDefault();
-                  void handleSendChat();
-                }
-              }}
+              onChange={(e) => setChatInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void handleSendChat(); } }}
               placeholder={texts.chatInputPlaceholder}
-              className="flex-1 rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-800"
+              className="glass-input flex-1"
             />
-            <button
-              type="button"
-              onClick={() => {
-                void handleSendChat();
-              }}
-              disabled={chatLoading}
-              className={primaryButtonClass}
-            >
+            <button type="button" onClick={() => { void handleSendChat(); }} disabled={chatLoading} className="btn-neon shrink-0">
               {texts.sendSymptomsBtn}
             </button>
           </div>
         </div>
 
+        {/* Triage Results */}
         <div className="grid gap-4 md:grid-cols-2">
           <RiskIndicator risk={triage?.risk_level ?? "LOW"} emergency={triage?.emergency_flag ?? false} language={voiceLanguage} />
-          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-soft dark:border-slate-800 dark:bg-slate-900">
-            <h3 className="text-sm font-semibold text-slate-500">{texts.advisoryTitle}</h3>
-            <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">{triageDisplayText}</p>
-            <p className="mt-3 text-xs text-slate-500">{triageDisclaimerText}</p>
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              <button type="button" onClick={playVoiceReply} className={voiceButtonClass}>
-                {texts.playAdvisoryVoice}
+          <div className="rounded-2xl p-5" style={{ ...glassCard, border: "1px solid rgba(56,189,248,0.20)" }}>
+            <h3 className="mb-2 text-xs font-bold uppercase tracking-[0.18em]" style={{ color: "rgba(56,189,248,0.7)" }}>
+              🩺 {texts.advisoryTitle}
+            </h3>
+            <p className="text-sm leading-relaxed text-slate-300">{triageDisplayText}</p>
+            <p className="mt-2 text-xs" style={{ color: "rgba(255,255,255,0.3)" }}>{triageDisclaimerText}</p>
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <button type="button" onClick={playVoiceReply} className="btn-neon">
+                ▶ {texts.playAdvisoryVoice}
               </button>
-              <button type="button" onClick={stopVoiceReply} className={secondaryButtonClass}>
-                {texts.stop}
+              <button type="button" onClick={stopVoiceReply} className="btn-ghost">
+                ⏹ {texts.stop}
               </button>
-              {showEnableAudioButton ? (
-                <button
-                  type="button"
-                  onClick={onUserGestureEnableAudio}
-                  className="rounded-xl border border-indigo-300 bg-indigo-50 px-3.5 py-2.5 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:border-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-300 dark:hover:bg-indigo-900/30 dark:focus-visible:ring-offset-slate-900"
-                >
-                  {texts.enableAudio}
+              {showEnableAudioButton && (
+                <button type="button" onClick={onUserGestureEnableAudio} className="btn-ghost" style={{ border: "1px solid rgba(167,139,250,0.35)", color: "#a78bfa" }}>
+                  🔊 {texts.enableAudio}
                 </button>
-              ) : null}
-              <label className="ml-1 flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-                <input
-                  type="checkbox"
-                  checked={autoVoiceReply}
-                  onChange={(event) => setAutoVoiceReply(event.target.checked)}
-                />
+              )}
+              <label className="flex cursor-pointer items-center gap-2 text-xs text-slate-400">
+                <input type="checkbox" checked={autoVoiceReply} onChange={(e) => setAutoVoiceReply(e.target.checked)} className="accent-emerald-400" />
                 {texts.autoVoice}
               </label>
             </div>
-            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">{isSpeaking ? texts.speaking : texts.voiceIdle}</p>
-            {voiceError ? <p className="mt-2 text-sm text-rose-600 dark:text-rose-400">{voiceError}</p> : null}
+            <p className="mt-2 text-xs" style={{ color: isSpeaking ? "#00e5a0" : "rgba(255,255,255,0.3)" }}>
+              {isSpeaking ? `🔈 ${texts.speaking}` : texts.voiceIdle}
+            </p>
+            {voiceError && <p className="mt-2 text-sm text-rose-400">{voiceError}</p>}
           </div>
         </div>
 
-        {emergencyBanner}
+        {/* Emergency Banner */}
+        {triage?.emergency_flag && (
+          <div
+            className="rounded-2xl px-5 py-4 text-sm font-bold animate-pulse-glow-rose"
+            style={{ background: "rgba(244,63,94,0.12)", border: "1px solid rgba(244,63,94,0.40)", color: "#f43f5e", boxShadow: "0 0 32px rgba(244,63,94,0.25)" }}
+          >
+            🚨 {texts.emergencyBanner}
+          </div>
+        )}
 
-        {symptomText ? <p className="text-xs text-slate-500">{texts.lastTranscript} {symptomText}</p> : null}
+        {symptomText && (
+          <p className="text-xs" style={{ color: "rgba(255,255,255,0.25)" }}>
+            {texts.lastTranscript} {symptomText}
+          </p>
+        )}
       </section>
     </main>
   );

@@ -11,7 +11,6 @@ function HospitalsPageContent() {
   const searchParams = useSearchParams();
   const initialCity = useMemo(() => searchParams.get("city") || "Bengaluru", [searchParams]);
   const [language, setLanguage] = useState<AppLanguage>("en");
-
   const [city, setCity] = useState(initialCity);
   const [hospitals, setHospitals] = useState<HospitalItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -41,42 +40,76 @@ function HospitalsPageContent() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-50 dark:bg-slate-950">
-      <Navbar language={language} onLanguageChange={(nextLanguage) => setLanguage(nextLanguage)} />
-      <section className="mx-auto max-w-6xl space-y-6 px-6 py-8">
-        <div className="rounded-2xl border border-emerald-100/80 bg-white/90 p-5 shadow-soft backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/90">
-          <h1 className="text-xl font-semibold text-slate-900 dark:text-white">
-            {language === "hi" ? "अस्पताल सुझाव" : "Hospital Suggestion"}
-          </h1>
-          <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+    <main className="min-h-screen">
+      <Navbar language={language} onLanguageChange={(l) => setLanguage(l)} />
+      <section className="mx-auto max-w-7xl space-y-6 px-6 py-10">
+        {/* Header */}
+        <div
+          className="rounded-2xl p-6 animate-slide-up"
+          style={{
+            background: "linear-gradient(135deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.02) 100%)",
+            border: "1px solid rgba(255,255,255,0.10)",
+            backdropFilter: "blur(20px)",
+            boxShadow: "0 8px 32px rgba(0,0,0,0.35)",
+          }}
+        >
+          <div className="mb-1 flex items-center gap-2">
+            <span className="text-xl">🏥</span>
+            <h1 className="text-xl font-extrabold text-white">
+              {language === "hi" ? "अस्पताल सुझाव" : "Hospital Finder"}
+            </h1>
+          </div>
+          <p className="mb-5 text-sm text-slate-400">
             {language === "hi"
               ? "इस सहायक द्वारा समर्थित शहर-वार नज़दीकी अस्पताल खोजें।"
-              : "Search city-wise nearby hospitals supported by this assistant."}
+              : "Find nearby hospitals city-wise supported by this assistant."}
           </p>
-          <div className="mt-3 flex flex-wrap gap-3">
+
+          <div className="flex flex-wrap gap-3">
             <input
               value={city}
-              onChange={(event) => setCity(event.target.value)}
-              className="rounded-xl border border-emerald-200/80 bg-white px-3 py-2.5 text-slate-800 shadow-sm dark:border-slate-700 dark:bg-slate-800"
-              placeholder={language === "hi" ? "शहर" : "City"}
+              onChange={(e) => setCity(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") void handleFindHospitals(); }}
+              className="glass-input max-w-xs flex-1"
+              placeholder={language === "hi" ? "शहर दर्ज करें…" : "Enter city…"}
             />
             <button
               type="button"
-              onClick={handleFindHospitals}
+              onClick={() => void handleFindHospitals()}
               disabled={loading}
-              className="rounded-xl bg-brand-gradient px-4 py-2.5 text-sm font-semibold text-white shadow-premium transition hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70 dark:focus-visible:ring-offset-slate-900"
+              className="btn-neon min-w-[140px]"
             >
-              {loading ? (language === "hi" ? "खोज रहे हैं..." : "Searching...") : language === "hi" ? "नज़दीकी अस्पताल खोजें" : "Find Nearby Hospitals"}
+              {loading
+                ? (language === "hi" ? "खोज रहे हैं…" : "Searching…")
+                : (language === "hi" ? "🔍 खोजें" : "🔍 Find Hospitals")}
             </button>
           </div>
-          {error ? <p className="mt-3 text-sm text-rose-600 dark:text-rose-400">{error}</p> : null}
+
+          {error && (
+            <p className="mt-3 text-sm text-rose-400">{error}</p>
+          )}
         </div>
 
-        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-          {hospitals.map((item) => (
-            <HospitalCard key={`${item.hospital_name}-${item.contact_number}`} item={item} language={language} />
-          ))}
-        </div>
+        {/* Results */}
+        {hospitals.length > 0 && (
+          <div>
+            <p
+              className="mb-3 text-xs font-bold uppercase tracking-[0.18em]"
+              style={{ color: "rgba(0,229,160,0.7)" }}
+            >
+              {hospitals.length} {language === "hi" ? "अस्पताल मिले" : "hospitals found"} in {city}
+            </p>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {hospitals.map((item) => (
+                <HospitalCard
+                  key={`${item.hospital_name}-${item.contact_number}`}
+                  item={item}
+                  language={language}
+                />
+              ))}
+            </div>
+          </div>
+        )}
       </section>
     </main>
   );
@@ -84,7 +117,7 @@ function HospitalsPageContent() {
 
 export default function HospitalsPage() {
   return (
-    <Suspense fallback={<main className="min-h-screen bg-slate-50 dark:bg-slate-950" />}>
+    <Suspense fallback={<main className="min-h-screen" />}>
       <HospitalsPageContent />
     </Suspense>
   );
