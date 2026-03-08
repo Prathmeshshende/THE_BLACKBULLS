@@ -138,3 +138,9 @@ Then restart:
 Notes:
 - If `OPENAI_API_KEY` is missing and fallback is `true`, transcription returns placeholder text.
 - If you want strict real STT only, set `STT_ENABLE_PLACEHOLDER_FALLBACK=false`.
+
+## Production Deployment
+
+For the easiest deployment path (Vercel for frontend + Render for backend) and post-deploy verification steps, follow:
+
+`DEPLOYMENT.md`

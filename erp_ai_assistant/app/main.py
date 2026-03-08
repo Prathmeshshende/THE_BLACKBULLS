@@ -10,6 +10,7 @@ from .config import get_settings
 from .db import Base, engine, get_db
 from .erp_client import ERPClient
 from .logging_service import log_session_interaction
+from . import models  # noqa: F401 - ensures SQLAlchemy models are registered on Base.metadata
 from .schemas import (
     AppointmentSlotsResponse,
     AssistantQueryRequest,
