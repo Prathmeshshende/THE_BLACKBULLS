@@ -184,6 +184,34 @@ REALTIME_CITY_CONFIG: dict[str, dict[str, object]] = {
 }
 
 
+def _title_city(city: str) -> str:
+    return " ".join(part.capitalize() for part in city.strip().split() if part)
+
+
+def _dynamic_city_fallback(city: str) -> list[dict[str, object]]:
+    city_title = _title_city(city) or "Your City"
+    return [
+        {
+            "hospital_name": f"District Government Hospital, {city_title}",
+            "government": True,
+            "scheme_supported": True,
+            "contact_number": "108",
+        },
+        {
+            "hospital_name": f"Civil Hospital, {city_title}",
+            "government": True,
+            "scheme_supported": True,
+            "contact_number": "108",
+        },
+        {
+            "hospital_name": f"Medical College Hospital, {city_title}",
+            "government": True,
+            "scheme_supported": True,
+            "contact_number": "108",
+        },
+    ]
+
+
 def _fetch_hospitals_from_osm(query_text: str, government: bool, scheme_supported: bool) -> list[dict[str, object]]:
     query = urlencode(
         {
@@ -240,59 +268,42 @@ def _fetch_hospitals_from_osm(query_text: str, government: bool, scheme_supporte
 
 async def suggest_hospitals(city: str) -> dict[str, object]:
     normalized_city = city.strip().lower()
+    display_name = str(REALTIME_CITY_CONFIG.get(normalized_city, {}).get("display_name") or _title_city(normalized_city) or city)
 
+    city_specific = HOSPITALS_BY_CITY.get(normalized_city, [])
     city_config = REALTIME_CITY_CONFIG.get(normalized_city)
-    if city_config is not None:
-        display_name = str(city_config["display_name"])
-        gov_fallback = list(city_config["gov_fallback"])
-        private_fallback = list(city_config["private_fallback"])
+    gov_fallback = list(city_config["gov_fallback"]) if city_config is not None else []
+    private_fallback = list(city_config["private_fallback"]) if city_config is not None else []
+    generic_fallback = _dynamic_city_fallback(display_name)
 
-        try:
-            gov_live, private_live = await asyncio.gather(
-                asyncio.to_thread(_fetch_hospitals_from_osm, f"government hospital in {display_name}", True, True),
-                asyncio.to_thread(_fetch_hospitals_from_osm, f"private hospital in {display_name}", False, False),
-            )
+    try:
+        gov_live, private_live = await asyncio.gather(
+            asyncio.to_thread(_fetch_hospitals_from_osm, f"government hospital in {display_name}", True, True),
+            asyncio.to_thread(_fetch_hospitals_from_osm, f"private hospital in {display_name}", False, False),
+        )
 
-            hospitals: list[dict[str, object]] = []
-            seen_names: set[str] = set()
+        hospitals: list[dict[str, object]] = []
+        seen_names: set[str] = set()
 
-            for entry in [*gov_live, *private_live]:
-                hospital_name = str(entry.get("hospital_name", "")).strip().lower()
-                if not hospital_name or hospital_name in seen_names:
-                    continue
-                seen_names.add(hospital_name)
-                hospitals.append(entry)
+        for entry in [*gov_live, *private_live]:
+            hospital_name = str(entry.get("hospital_name", "")).strip().lower()
+            if not hospital_name or hospital_name in seen_names:
+                continue
+            seen_names.add(hospital_name)
+            hospitals.append(entry)
 
-            if not hospitals:
-                hospitals = [*gov_fallback, *private_fallback]
-            else:
-                for fallback in [*gov_fallback, *private_fallback]:
-                    fallback_name = str(fallback.get("hospital_name", "")).strip().lower()
-                    if fallback_name and fallback_name not in seen_names:
-                        hospitals.append(fallback)
-                        seen_names.add(fallback_name)
-                    if len(hospitals) >= 8:
-                        break
-        except Exception:
-            hospitals = [*gov_fallback, *private_fallback]
+        for fallback in [*city_specific, *gov_fallback, *private_fallback, *generic_fallback]:
+            fallback_name = str(fallback.get("hospital_name", "")).strip().lower()
+            if fallback_name and fallback_name not in seen_names:
+                hospitals.append(fallback)
+                seen_names.add(fallback_name)
+            if len(hospitals) >= 10:
+                break
+    except Exception:
+        hospitals = [*city_specific, *gov_fallback, *private_fallback, *generic_fallback]
 
-        return {
-            "city": city,
-            "hospitals": hospitals,
-            "disclaimer": MEDICAL_DISCLAIMER,
-        }
-
-    hospitals = HOSPITALS_BY_CITY.get(
-        normalized_city,
-        [
-            {
-                "hospital_name": "Nearest District Government Hospital",
-                "government": True,
-                "scheme_supported": True,
-                "contact_number": "108",
-            }
-        ],
-    )
+    if not hospitals:
+        hospitals = generic_fallback
 
     return {
         "city": city,

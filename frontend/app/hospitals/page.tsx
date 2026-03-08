@@ -9,7 +9,7 @@ import { getAppLanguage, onAppLanguageChange, type AppLanguage } from "@/lib/lan
 
 function HospitalsPageContent() {
   const searchParams = useSearchParams();
-  const initialCity = useMemo(() => searchParams.get("city") || "Bengaluru", [searchParams]);
+  const initialCity = useMemo(() => searchParams.get("city") || "Nagpur", [searchParams]);
   const [language, setLanguage] = useState<AppLanguage>("en");
   const [city, setCity] = useState(initialCity);
   const [hospitals, setHospitals] = useState<HospitalItem[]>([]);
@@ -25,7 +25,7 @@ function HospitalsPageContent() {
     setLoading(true);
     setError("");
     try {
-      const result = await getHospitals(city.trim() || "Bengaluru");
+      const result = await getHospitals(city.trim() || "Nagpur");
       setHospitals(result.hospitals);
     } catch {
       setError(
