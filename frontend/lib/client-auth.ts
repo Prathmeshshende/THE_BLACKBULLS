@@ -11,35 +11,59 @@ type GoogleSession = {
   picture?: string;
 };
 
+function safeGet(key: string): string | null {
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function safeSet(key: string, value: string): void {
+  try {
+    window.localStorage.setItem(key, value);
+  } catch {
+    // Ignore blocked storage environments.
+  }
+}
+
+function safeRemove(key: string): void {
+  try {
+    window.localStorage.removeItem(key);
+  } catch {
+    // Ignore blocked storage environments.
+  }
+}
+
 export function isGoogleLoggedIn() {
   return true;
 }
 
 export function setGoogleSession(session: GoogleSession) {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(GOOGLE_SESSION_KEY, JSON.stringify(session));
+  safeSet(GOOGLE_SESSION_KEY, JSON.stringify(session));
 }
 
 export function clearClientSession() {
   if (typeof window === "undefined") return;
-  window.localStorage.removeItem(GOOGLE_SESSION_KEY);
-  window.localStorage.removeItem(BACKEND_TOKEN_KEY);
+  safeRemove(GOOGLE_SESSION_KEY);
+  safeRemove(BACKEND_TOKEN_KEY);
 }
 
 export function getBackendToken() {
   if (typeof window === "undefined") return "";
-  return window.localStorage.getItem(BACKEND_TOKEN_KEY) ?? "";
+  return safeGet(BACKEND_TOKEN_KEY) ?? "";
 }
 
 export async function ensureBackendToken() {
   if (typeof window === "undefined") return "";
 
-  const existing = window.localStorage.getItem(BACKEND_TOKEN_KEY);
+  const existing = safeGet(BACKEND_TOKEN_KEY);
   if (existing) return existing;
 
   try {
     const result = await login("admin@example.com", "StrongPass123");
-    window.localStorage.setItem(BACKEND_TOKEN_KEY, result.access_token);
+    safeSet(BACKEND_TOKEN_KEY, result.access_token);
     return result.access_token;
   } catch {
     await signup({
@@ -50,7 +74,7 @@ export async function ensureBackendToken() {
       state: "Maharashtra",
     });
     const result = await login("admin@example.com", "StrongPass123");
-    window.localStorage.setItem(BACKEND_TOKEN_KEY, result.access_token);
+    safeSet(BACKEND_TOKEN_KEY, result.access_token);
     return result.access_token;
   }
 }

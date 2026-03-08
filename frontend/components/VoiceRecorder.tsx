@@ -18,6 +18,7 @@ type SpeechRecognitionConstructor = new () => SpeechRecognitionLike;
 
 type MediaRecorderLike = {
   state: string;
+  mimeType?: string;
   ondataavailable: ((event: { data: Blob }) => void) | null;
   onstop: (() => void) | null;
   onerror: (() => void) | null;
@@ -25,7 +26,10 @@ type MediaRecorderLike = {
   stop: () => void;
 };
 
-type MediaRecorderConstructor = new (stream: MediaStream) => MediaRecorderLike;
+type MediaRecorderConstructor = {
+  new (stream: MediaStream, options?: { mimeType?: string }): MediaRecorderLike;
+  isTypeSupported?: (mimeType: string) => boolean;
+};
 
 declare global {
   interface Window {
@@ -66,6 +70,19 @@ export default function VoiceRecorder({ onTranscript, language = "en" }: Props) 
     }
   };
 
+  const pickRecordingMimeType = (MediaRecorderImpl?: MediaRecorderConstructor) => {
+    if (!MediaRecorderImpl?.isTypeSupported) {
+      return undefined;
+    }
+    const candidates = [
+      "audio/webm;codecs=opus",
+      "audio/webm",
+      "audio/mp4",
+      "audio/ogg;codecs=opus",
+    ];
+    return candidates.find((mime) => MediaRecorderImpl.isTypeSupported?.(mime));
+  };
+
   useEffect(() => {
     return () => {
       if (startTimeoutRef.current) {
@@ -91,7 +108,8 @@ export default function VoiceRecorder({ onTranscript, language = "en" }: Props) 
   }, []);
 
   const submitMediaRecording = async () => {
-    const blob = new Blob(mediaChunksRef.current, { type: "audio/webm" });
+    const preferredMime = mediaRecorderRef.current?.mimeType || mediaChunksRef.current[0]?.type || "audio/webm";
+    const blob = new Blob(mediaChunksRef.current, { type: preferredMime });
     mediaChunksRef.current = [];
     stopMediaStream();
     if (!blob.size) {
@@ -100,8 +118,8 @@ export default function VoiceRecorder({ onTranscript, language = "en" }: Props) 
     }
 
     try {
-      const file = new File([blob], "mic-input.webm", { type: blob.type || "audio/webm" });
-      const response = await transcribeVoice(file, language);
+      const extension = blob.type.includes("mp4") ? "m4a" : blob.type.includes("ogg") ? "ogg" : "webm";
+      const response = await transcribeVoice(blob, language, `mic-input.${extension}`);
       const transcript = response.transcript?.trim() ?? "";
       if (!transcript) {
         setMicError(labels.noSpeechDetected);
@@ -216,7 +234,8 @@ export default function VoiceRecorder({ onTranscript, language = "en" }: Props) 
     try {
       mediaChunksRef.current = [];
       mediaStreamRef.current = stream;
-      const mediaRecorder = new MediaRecorderImpl(stream);
+      const mimeType = pickRecordingMimeType(MediaRecorderImpl);
+      const mediaRecorder = mimeType ? new MediaRecorderImpl(stream, { mimeType }) : new MediaRecorderImpl(stream);
       mediaRecorder.ondataavailable = (event) => {
         if (event.data && event.data.size > 0) {
           mediaChunksRef.current.push(event.data);

@@ -78,9 +78,9 @@ export async function login(email: string, password: string) {
   return response.data as { access_token: string; token_type: string };
 }
 
-export async function transcribeVoice(file: File, language: "en" | "hi" = "en") {
+export async function transcribeVoice(file: Blob | File, language: "en" | "hi" = "en", fileName = "mic-input.webm") {
   const formData = new FormData();
-  formData.append("file", file);
+  formData.append("file", file, fileName);
   formData.append("language", language);
   const response = await api.post("/voice/transcribe", formData, {
     headers: { "Content-Type": "multipart/form-data" },

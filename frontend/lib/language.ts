@@ -5,15 +5,31 @@ export type AppLanguage = "en" | "hi";
 const APP_LANGUAGE_KEY = "hv_app_language";
 const APP_LANGUAGE_EVENT = "hv-language-change";
 
+function safeGet(key: string): string | null {
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function safeSet(key: string, value: string): void {
+  try {
+    window.localStorage.setItem(key, value);
+  } catch {
+    // Ignore storage write failures (private mode / blocked storage).
+  }
+}
+
 export function getAppLanguage(): AppLanguage {
   if (typeof window === "undefined") return "en";
-  const value = window.localStorage.getItem(APP_LANGUAGE_KEY);
+  const value = safeGet(APP_LANGUAGE_KEY);
   return value === "hi" ? "hi" : "en";
 }
 
 export function setAppLanguage(language: AppLanguage) {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(APP_LANGUAGE_KEY, language);
+  safeSet(APP_LANGUAGE_KEY, language);
   window.dispatchEvent(new CustomEvent(APP_LANGUAGE_EVENT, { detail: language }));
 }
 
