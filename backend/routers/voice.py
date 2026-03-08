@@ -1,7 +1,7 @@
 import base64
 from io import BytesIO
 
-from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
 
 from models.schemas import VoiceTranscriptionResponse, VoiceTTSRequest, VoiceTTSResponse
 from services.stt_service import STTService
@@ -15,15 +15,22 @@ router = APIRouter(prefix="/voice", tags=["voice"])
 
 
 @router.post("/transcribe", response_model=VoiceTranscriptionResponse)
-async def transcribe_voice(file: UploadFile = File(...)) -> VoiceTranscriptionResponse:
+async def transcribe_voice(
+    request: Request,
+    file: UploadFile = File(...),
+    language: str = Form("en"),
+) -> VoiceTranscriptionResponse:
     # Read uploaded audio bytes from the request.
     audio_bytes = await file.read()
     if not audio_bytes:
         raise HTTPException(status_code=400, detail="Uploaded audio file is empty")
 
-    # MVP placeholder: a real STT provider can be integrated later.
-    stt_service = STTService()
-    transcript = await stt_service.transcribe_bytes(audio_bytes)
+    stt_service: STTService = getattr(request.app.state, "stt_service", STTService())
+    transcript = await stt_service.transcribe_bytes(
+        audio_bytes,
+        filename=file.filename or "audio.webm",
+        language=language if language in {"en", "hi"} else "en",
+    )
 
     # Return only safe non-diagnostic text response.
     return VoiceTranscriptionResponse(transcript=transcript)
@@ -47,4 +54,18 @@ async def generate_tts(data: VoiceTTSRequest) -> VoiceTTSResponse:
         encoded = base64.b64encode(mp3_buffer.getvalue()).decode("utf-8")
         return VoiceTTSResponse(audio_base64=encoded, mime_type="audio/mpeg", provider="gtts")
     except Exception as error:
+        # Some runtimes fail Hindi gTTS intermittently; retry with English voice fallback.
+        if tts_language == "hi":
+            try:
+                fallback_buffer = BytesIO()
+                fallback_text = (
+                    "Hindi voice is currently unavailable. "
+                    "Playing fallback voice output."
+                )
+                fallback_tts = gTTS(text=fallback_text, lang="en", slow=False)
+                fallback_tts.write_to_fp(fallback_buffer)
+                fallback_encoded = base64.b64encode(fallback_buffer.getvalue()).decode("utf-8")
+                return VoiceTTSResponse(audio_base64=fallback_encoded, mime_type="audio/mpeg", provider="gtts-en-fallback")
+            except Exception:
+                pass
         raise HTTPException(status_code=502, detail=f"Cloud TTS failed: {str(error)}") from error

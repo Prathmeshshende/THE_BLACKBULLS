@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import EligibilityCard from "@/components/EligibilityCard";
 import Navbar from "@/components/Navbar";
-import { runEligibility, type EligibilityResponse } from "@/lib/api";
+import { generateVoiceTTS, runEligibility, type EligibilityResponse } from "@/lib/api";
 import { ensureBackendToken, isGoogleLoggedIn } from "@/lib/client-auth";
 import { getAppLanguage, setAppLanguage } from "@/lib/language";
 
@@ -22,6 +22,7 @@ export default function EligibilityCheckerPage() {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [voiceError, setVoiceError] = useState("");
   const [voiceLanguage, setVoiceLanguage] = useState<VoiceLanguage>(() => getAppLanguage());
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     if (!isGoogleLoggedIn()) { router.replace("/"); return; }
@@ -64,23 +65,110 @@ export default function EligibilityCheckerPage() {
   const buildVoiceText = (result: EligibilityResponse | null) => {
     if (!result) return voiceLanguage === "hi" ? "अभी पात्रता परिणाम उपलब्ध नहीं है।" : "No eligibility result yet.";
     const eligible = result.eligible;
-    const schemes = result.scheme_decisions.filter((s) => s.eligible).map((s) => s.scheme_name);
-    if (voiceLanguage === "hi") return `${eligible ? "आप पात्र हैं।" : "आप अभी पात्र नहीं हैं।"} ${result.assessment_summary}`;
-    return `${eligible ? "You are eligible." : "You are not eligible."} ${result.assessment_summary} ${schemes.length ? `Schemes: ${schemes.join(", ")}.` : ""}`;
+    const eligibleSchemes = result.scheme_decisions.filter((s) => s.eligible).map((s) => s.scheme_name);
+    const notEligibleSchemes = result.scheme_decisions.filter((s) => !s.eligible).map((s) => s.scheme_name);
+
+    if (voiceLanguage === "hi") {
+      const eligibleLine = eligibleSchemes.length
+        ? `पात्र योजनाएं: ${eligibleSchemes.join(", ")}।`
+        : "फिलहाल कोई पात्र योजना नहीं मिली।";
+      const notEligibleLine = notEligibleSchemes.length
+        ? `अभी अपात्र योजनाएं: ${notEligibleSchemes.join(", ")}।`
+        : "आप ट्रैक की गई सभी योजनाओं के लिए पात्र हैं।";
+      return `${eligible ? "आप समग्र रूप से पात्र हैं।" : "आप समग्र रूप से अभी पात्र नहीं हैं।"} ${result.assessment_summary} ${eligibleLine} ${notEligibleLine}`;
+    }
+
+    const eligibleLine = eligibleSchemes.length ? `Eligible schemes: ${eligibleSchemes.join(", ")}.` : "No eligible schemes were found.";
+    const notEligibleLine = notEligibleSchemes.length ? `Not eligible schemes: ${notEligibleSchemes.join(", ")}.` : "You are eligible for all tracked schemes.";
+    return `${eligible ? "You are eligible overall." : "You are not eligible overall."} ${result.assessment_summary} ${eligibleLine} ${notEligibleLine}`;
   };
 
-  const playVoice = () => {
-    if (!("speechSynthesis" in window)) { setVoiceError("Voice not supported."); return; }
-    const synth = window.speechSynthesis;
-    const utterance = new SpeechSynthesisUtterance(buildVoiceText(eligibility));
-    const voices = synth.getVoices();
-    const voice = voiceLanguage === "hi"
-      ? voices.find((v) => v.lang.startsWith("hi")) : voices.find((v) => v.lang.startsWith("en"));
-    if (voice) { utterance.voice = voice; utterance.lang = voice.lang; }
-    utterance.onstart = () => setIsSpeaking(true);
-    utterance.onend = () => setIsSpeaking(false);
-    utterance.onerror = () => { setIsSpeaking(false); setVoiceError("Voice playback failed."); };
-    synth.cancel(); synth.speak(utterance);
+  const playCloudTTS = async (text: string, language: VoiceLanguage) => {
+    try {
+      const response = await generateVoiceTTS({ text, language });
+      const dataUri = `data:${response.mime_type};base64,${response.audio_base64}`;
+      if (!audioRef.current) {
+        audioRef.current = new Audio();
+      }
+      if ("speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
+      audioRef.current.src = dataUri;
+      setIsSpeaking(true);
+      await audioRef.current.play();
+      audioRef.current.onended = () => setIsSpeaking(false);
+      setVoiceError("");
+      return true;
+    } catch {
+      if (language === "hi") {
+        try {
+          const fallback = await generateVoiceTTS({ text, language: "en" });
+          const dataUri = `data:${fallback.mime_type};base64,${fallback.audio_base64}`;
+          if (!audioRef.current) {
+            audioRef.current = new Audio();
+          }
+          audioRef.current.src = dataUri;
+          setIsSpeaking(true);
+          await audioRef.current.play();
+          audioRef.current.onended = () => setIsSpeaking(false);
+          setVoiceError("Hindi cloud voice unavailable, using fallback voice.");
+          return true;
+        } catch {
+          // Fall through to common error state.
+        }
+      }
+      setIsSpeaking(false);
+      setVoiceError("Voice playback failed.");
+      return false;
+    }
+  };
+
+  const playVoice = async () => {
+    try {
+      const voiceText = buildVoiceText(eligibility);
+      if (!("speechSynthesis" in window)) {
+        await playCloudTTS(voiceText, voiceLanguage);
+        return;
+      }
+      const synth = window.speechSynthesis;
+      const utterance = new SpeechSynthesisUtterance(voiceText);
+      const voices = synth.getVoices();
+      const voice = voiceLanguage === "hi"
+        ? voices.find((v) => v.lang.startsWith("hi")) : voices.find((v) => v.lang.startsWith("en"));
+      let attemptedCloudFallback = false;
+
+      if (!voice && voiceLanguage === "hi") {
+        const cloudPlayed = await playCloudTTS(voiceText, "hi");
+        if (cloudPlayed) {
+          return;
+        }
+        attemptedCloudFallback = true;
+      }
+
+      if (voice) {
+        utterance.voice = voice;
+        utterance.lang = voice.lang;
+      } else {
+        utterance.lang = voiceLanguage === "hi" ? "hi-IN" : "en-US";
+      }
+
+      utterance.onstart = () => setIsSpeaking(true);
+      utterance.onend = () => setIsSpeaking(false);
+      utterance.onerror = () => {
+        setIsSpeaking(false);
+        if (!attemptedCloudFallback && voiceLanguage === "hi") {
+          attemptedCloudFallback = true;
+          void playCloudTTS(voiceText, "hi");
+          return;
+        }
+        setVoiceError("Voice playback failed.");
+      };
+      synth.cancel();
+      synth.speak(utterance);
+    } catch {
+      setIsSpeaking(false);
+      setVoiceError("Voice playback failed.");
+    }
   };
 
   const checkboxFields = [
@@ -135,6 +223,39 @@ export default function EligibilityCheckerPage() {
               ))}
             </div>
           </div>
+        </div>
+
+        {/* Voice Response */}
+        <div
+          className="rounded-2xl p-5"
+          style={{
+            background: "linear-gradient(135deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.02) 100%)",
+            border: "1px solid rgba(255,255,255,0.10)",
+            backdropFilter: "blur(20px)",
+          }}
+        >
+          <h3 className="mb-1 text-sm font-semibold text-white">🔊 Eligibility Voice Response</h3>
+          <p className="mb-3 text-xs text-slate-400">{isSpeaking ? "🔈 Speaking…" : "Voice idle"}</p>
+          <div className="flex gap-3">
+            <button type="button" onClick={() => { void playVoice(); }} className="btn-neon" style={{ background: "linear-gradient(135deg,#a78bfa,#38bdf8)", boxShadow: "0 0 16px rgba(167,139,250,0.35)" }}>
+              ▶ Play Voice
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                window.speechSynthesis?.cancel();
+                if (audioRef.current) {
+                  audioRef.current.pause();
+                  audioRef.current.currentTime = 0;
+                }
+                setIsSpeaking(false);
+              }}
+              className="btn-ghost"
+            >
+              ⏹ Stop
+            </button>
+          </div>
+          {voiceError && <p className="mt-2 text-sm text-rose-400">{voiceError}</p>}
         </div>
 
         {/* Form */}
@@ -200,31 +321,6 @@ export default function EligibilityCheckerPage() {
         {/* Result */}
         <EligibilityCard data={eligibility} language={voiceLanguage} />
 
-        {/* Voice Response */}
-        <div
-          className="rounded-2xl p-5"
-          style={{
-            background: "linear-gradient(135deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.02) 100%)",
-            border: "1px solid rgba(255,255,255,0.10)",
-            backdropFilter: "blur(20px)",
-          }}
-        >
-          <h3 className="mb-1 text-sm font-semibold text-white">🔊 Eligibility Voice Response</h3>
-          <p className="mb-3 text-xs text-slate-400">{isSpeaking ? "🔈 Speaking…" : "Voice idle"}</p>
-          <div className="flex gap-3">
-            <button type="button" onClick={playVoice} className="btn-neon" style={{ background: "linear-gradient(135deg,#a78bfa,#38bdf8)", boxShadow: "0 0 16px rgba(167,139,250,0.35)" }}>
-              ▶ Play Voice
-            </button>
-            <button
-              type="button"
-              onClick={() => { window.speechSynthesis?.cancel(); setIsSpeaking(false); }}
-              className="btn-ghost"
-            >
-              ⏹ Stop
-            </button>
-          </div>
-          {voiceError && <p className="mt-2 text-sm text-rose-400">{voiceError}</p>}
-        </div>
       </section>
     </main>
   );

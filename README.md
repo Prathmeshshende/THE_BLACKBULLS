@@ -118,3 +118,23 @@ Then restart:
 Notes:
 - Phone number should include country code (e.g. `+919699526226`).
 - `PLIVO_SRC` must be a valid sender configured in your Plivo account.
+
+## 🎙 Real Speech-to-Text (Whisper)
+
+To enable real microphone transcription (instead of placeholder text), set these in `.env`:
+
+```powershell
+OPENAI_API_KEY=your_openai_api_key
+OPENAI_STT_MODEL=gpt-4o-mini-transcribe
+STT_ENABLE_PLACEHOLDER_FALLBACK=true
+```
+
+Then restart:
+
+```powershell
+.\start_all.ps1
+```
+
+Notes:
+- If `OPENAI_API_KEY` is missing and fallback is `true`, transcription returns placeholder text.
+- If you want strict real STT only, set `STT_ENABLE_PLACEHOLDER_FALLBACK=false`.

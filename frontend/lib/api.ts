@@ -78,9 +78,10 @@ export async function login(email: string, password: string) {
   return response.data as { access_token: string; token_type: string };
 }
 
-export async function transcribeVoice(file: File) {
+export async function transcribeVoice(file: File, language: "en" | "hi" = "en") {
   const formData = new FormData();
   formData.append("file", file);
+  formData.append("language", language);
   const response = await api.post("/voice/transcribe", formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });

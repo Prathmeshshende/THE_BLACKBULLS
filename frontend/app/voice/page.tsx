@@ -659,16 +659,6 @@ export default function VoicePage() {
         : "No triage result is available yet. Please enter symptoms first.";
     }
 
-    if (language === "hi") {
-      const normalizedRisk = result.risk_level.toUpperCase();
-      const riskHindi = normalizedRisk === "HIGH" ? "उच्च" : normalizedRisk === "MEDIUM" ? "मध्यम" : normalizedRisk === "LOW" ? "कम" : result.risk_level;
-      const emergencyLine = result.emergency_flag
-        ? "यह आपातकालीन स्थिति हो सकती है। कृपया तुरंत नजदीकी अस्पताल या डॉक्टर से संपर्क करें।"
-        : "कृपया जल्द डॉक्टर से सलाह लें और स्क्रीन पर दिया गया विस्तृत परामर्श पढ़ें।";
-
-      return `ट्रायेज परिणाम तैयार है। जोखिम स्तर ${riskHindi} है। ${emergencyLine}`;
-    }
-
     return result.advisory_message;
   };
 
@@ -829,9 +819,7 @@ export default function VoicePage() {
         ? (result.risk_level.toUpperCase() === "HIGH" ? "उच्च" : result.risk_level.toUpperCase() === "MEDIUM" ? "मध्यम" : result.risk_level.toUpperCase() === "LOW" ? "कम" : result.risk_level)
         : result.risk_level;
 
-    const advisoryTextForDisplay = voiceLanguage === "hi"
-      ? buildTriageVoiceText(result, "hi")
-      : result.advisory_message;
+    const advisoryTextForDisplay = result.advisory_message;
 
     const assistantText = `${texts.riskPrefix}: ${displayRisk}${result.emergency_flag ? ` (${texts.emergencyTag})` : ""}\n${advisoryTextForDisplay}`;
     setChatMessages((prev) => [...prev, { role: "assistant", text: assistantText }]);
@@ -964,9 +952,7 @@ export default function VoicePage() {
   }, [whatsAppAutoSummary, whatsAppPhone, whatsAppCity, triage, eligibility, token, voiceLanguage, texts.whatsappNeedPhone, texts.whatsappSendFailed, texts.whatsappSent]);
 
   const triageDisplayText =
-    voiceLanguage === "hi"
-      ? buildTriageVoiceText(triage, "hi")
-      : (triage?.advisory_message ?? texts.noTriage);
+    triage?.advisory_message ?? texts.noTriage;
 
   const triageDisclaimerText =
     voiceLanguage === "hi"

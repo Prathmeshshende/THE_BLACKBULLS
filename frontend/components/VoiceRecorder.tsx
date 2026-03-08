@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { transcribeVoice } from "@/lib/api";
 
 type SpeechRecognitionAlternativeLike = { transcript: string };
@@ -66,6 +66,30 @@ export default function VoiceRecorder({ onTranscript, language = "en" }: Props) 
     }
   };
 
+  useEffect(() => {
+    return () => {
+      if (startTimeoutRef.current) {
+        clearTimeout(startTimeoutRef.current);
+        startTimeoutRef.current = null;
+      }
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch {
+          // Ignore stop errors during unmount.
+        }
+      }
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+        try {
+          mediaRecorderRef.current.stop();
+        } catch {
+          // Ignore stop errors during unmount.
+        }
+      }
+      stopMediaStream();
+    };
+  }, []);
+
   const submitMediaRecording = async () => {
     const blob = new Blob(mediaChunksRef.current, { type: "audio/webm" });
     mediaChunksRef.current = [];
@@ -77,7 +101,7 @@ export default function VoiceRecorder({ onTranscript, language = "en" }: Props) 
 
     try {
       const file = new File([blob], "mic-input.webm", { type: blob.type || "audio/webm" });
-      const response = await transcribeVoice(file);
+      const response = await transcribeVoice(file, language);
       const transcript = response.transcript?.trim() ?? "";
       if (!transcript) {
         setMicError(labels.noSpeechDetected);
@@ -109,6 +133,11 @@ export default function VoiceRecorder({ onTranscript, language = "en" }: Props) 
       }
       setRecording(false);
       setStarting(false);
+      return;
+    }
+
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setMicError(labels.mediaRecorderNotAvailable);
       return;
     }
 

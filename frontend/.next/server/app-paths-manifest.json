@@ -1,5 +1,5 @@
 {
-  "/dashboard-login/page": "app/dashboard-login/page.js",
+  "/eligibility-checker/page": "app/eligibility-checker/page.js",
   "/voice/page": "app/voice/page.js",
   "/hospitals/page": "app/hospitals/page.js"
 }
